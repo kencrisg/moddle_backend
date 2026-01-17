@@ -1,22 +1,34 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CourseServiceController } from './course-service.controller';
-import { CourseServiceService } from './course-service.service';
+import { CourseController } from './course-service.controller';
+import { CreateCourseHandler } from '../../application/handlers/create-course.handler';
 
-describe('CourseServiceController', () => {
-  let courseServiceController: CourseServiceController;
+
+describe('CourseController', () => {
+  let controller: CourseController;
+  let handler: CreateCourseHandler;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
-      controllers: [CourseServiceController],
-      providers: [CourseServiceService],
+      controllers: [CourseController],
+      providers: [
+        {
+          provide: CreateCourseHandler,
+          useValue: {
+            execute: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
-    courseServiceController = app.get<CourseServiceController>(CourseServiceController);
+    controller = app.get<CourseController>(CourseController);
+    handler = app.get<CreateCourseHandler>(CreateCourseHandler);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(courseServiceController.getHello()).toBe('Hello World!');
+  describe('create', () => {
+    it('should call execute on handler', async () => {
+      const payload = { id: '1', title: 'Test', videoUrl: 'url' };
+      await controller.create(payload);
+      expect(handler.execute).toHaveBeenCalledWith(payload);
     });
   });
 });

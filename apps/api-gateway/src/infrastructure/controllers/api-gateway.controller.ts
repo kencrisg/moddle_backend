@@ -1,12 +1,28 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiGatewayService } from './api-gateway.service';
+import { Body, Controller, Inject, OnModuleInit, Post } from '@nestjs/common';
+import { ClientKafka } from '@nestjs/microservices';
 
-@Controller()
-export class ApiGatewayController {
-  constructor(private readonly apiGatewayService: ApiGatewayService) {}
+@Controller('courses')
+export class ApiGatewayController implements OnModuleInit {
+  constructor(
+    @Inject('COURSE_SERVICE') private readonly courseClient: ClientKafka,
+  ) {}
 
-  @Get()
-  getHello(): string {
-    return this.apiGatewayService.getHello();
+  // Nos conectamos a Kafka apenas arranque el Gateway
+  async onModuleInit() {
+    this.courseClient.subscribeToResponseOf('create.course');
+    await this.courseClient.connect();
+    console.log('🐯 Gateway conectado a Kafka');
+  }
+
+  @Post()
+  createCourse(@Body() body: any) {
+    console.log('📨 Gateway: Recibiendo HTTP POST, enviando a Kafka...');
+    
+    // Enviamos el mensaje al microservicio
+    return this.courseClient.send('create.course', {
+      id: crypto.randomUUID(), // Generamos ID único
+      title: body.title,
+      videoUrl: body.videoUrl,
+    });
   }
 }

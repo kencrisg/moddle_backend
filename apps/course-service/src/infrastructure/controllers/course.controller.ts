@@ -6,19 +6,13 @@ import { CreateCourseHandler } from '../../application/handlers/create-course.ha
 export class CourseController {
   constructor(private readonly createCourseHandler: CreateCourseHandler) {}
 
-  // OJO: Ya no es @Post, ahora es @MessagePattern. 
-  // Escucha el tópico 'create.course' que le mandará el Gateway.
-  @MessagePattern('create.course') 
+  @MessagePattern('create.course')
   async create(@Payload() message: any) {
-    console.log('🐯 [Course Service] Mensaje Kafka recibido:', message);
-    
-    // Ejecutamos el caso de uso (CQRS)
+    console.log('🐯 [Kafka] Mensaje recibido:', message);
     await this.createCourseHandler.execute({
       id: message.id,
       title: message.title,
       videoUrl: message.videoUrl
     });
-
-    return { status: 'success', courseId: message.id };
   }
 }
