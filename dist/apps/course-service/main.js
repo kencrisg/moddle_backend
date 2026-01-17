@@ -139,18 +139,22 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CreateUserHandler = void 0;
 const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
+const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
 const user_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/user.entity */ "./apps/course-service/src/infrastructure/persistence/entities/user.entity.ts");
 const create_user_command_1 = __webpack_require__(/*! ../commands/create-user.command */ "./apps/course-service/src/application/commands/create-user.command.ts");
+const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-created.event */ "./apps/course-service/src/domain/events/user-created.event.ts");
 let CreateUserHandler = class CreateUserHandler {
     userRepo;
-    constructor(userRepo) {
+    eventEmitter;
+    constructor(userRepo, eventEmitter) {
         this.userRepo = userRepo;
+        this.eventEmitter = eventEmitter;
     }
     async execute(command) {
         const user = new user_entity_1.UserEntity();
@@ -158,12 +162,14 @@ let CreateUserHandler = class CreateUserHandler {
         user.email = command.email;
         user.password = command.password;
         user.fullName = command.fullName;
+        user.role = 's';
         try {
             await this.userRepo.save(user);
-            console.log(`👤 [User] Usuario creado: ${user.email}`);
+            console.log(`👤 [User] Usuario guardado en moodle_w: ${user.email}`);
+            this.eventEmitter.emit('UserCreatedEvent', new user_created_event_1.UserCreatedEvent(user.id, user.email, user.password, user.fullName, user.role));
         }
         catch (error) {
-            console.error('Error creando usuario (posible email duplicado)');
+            console.error('Error creando usuario:', error);
             throw error;
         }
     }
@@ -172,7 +178,7 @@ exports.CreateUserHandler = CreateUserHandler;
 exports.CreateUserHandler = CreateUserHandler = __decorate([
     (0, cqrs_1.CommandHandler)(create_user_command_1.CreateUserCommand),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof event_emitter_1.EventEmitter2 !== "undefined" && event_emitter_1.EventEmitter2) === "function" ? _b : Object])
 ], CreateUserHandler);
 
 
@@ -338,6 +344,67 @@ exports.SyncCourseReadModelHandler = SyncCourseReadModelHandler = __decorate([
 
 /***/ },
 
+/***/ "./apps/course-service/src/application/handlers/sync-user-read-model.handler.ts"
+/*!**************************************************************************************!*\
+  !*** ./apps/course-service/src/application/handlers/sync-user-read-model.handler.ts ***!
+  \**************************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SyncUserReadModelHandler = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
+const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
+const user_view_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/user-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/user-view.entity.ts");
+const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-created.event */ "./apps/course-service/src/domain/events/user-created.event.ts");
+let SyncUserReadModelHandler = class SyncUserReadModelHandler {
+    readRepository;
+    constructor(readRepository) {
+        this.readRepository = readRepository;
+    }
+    async handle(event) {
+        console.log('🔄 [Sync] Sincronizando usuario en moodle_r (Read DB)...');
+        const viewUser = new user_view_entity_1.UserViewEntity();
+        viewUser.id = event.id;
+        viewUser.email = event.email;
+        viewUser.password = event.password;
+        viewUser.fullName = event.fullName;
+        viewUser.role = event.role;
+        await this.readRepository.save(viewUser);
+        console.log('✅ [Sync] ¡Usuario sincronizado en moodle_r!');
+    }
+};
+exports.SyncUserReadModelHandler = SyncUserReadModelHandler;
+__decorate([
+    (0, event_emitter_1.OnEvent)('UserCreatedEvent'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_b = typeof user_created_event_1.UserCreatedEvent !== "undefined" && user_created_event_1.UserCreatedEvent) === "function" ? _b : Object]),
+    __metadata("design:returntype", Promise)
+], SyncUserReadModelHandler.prototype, "handle", null);
+exports.SyncUserReadModelHandler = SyncUserReadModelHandler = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, typeorm_1.InjectRepository)(user_view_entity_1.UserViewEntity, 'READ_CONNECTION')),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
+], SyncUserReadModelHandler);
+
+
+/***/ },
+
 /***/ "./apps/course-service/src/application/handlers/unenroll-student.handler.ts"
 /*!**********************************************************************************!*\
   !*** ./apps/course-service/src/application/handlers/unenroll-student.handler.ts ***!
@@ -436,6 +503,8 @@ const course_view_entity_1 = __webpack_require__(/*! ./infrastructure/persistenc
 const course_controller_1 = __webpack_require__(/*! ./infrastructure/controllers/course.controller */ "./apps/course-service/src/infrastructure/controllers/course.controller.ts");
 const enrollment_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/enrollment.entity */ "./apps/course-service/src/infrastructure/persistence/entities/enrollment.entity.ts");
 const enroll_student_handler_1 = __webpack_require__(/*! ./application/handlers/enroll-student.handler */ "./apps/course-service/src/application/handlers/enroll-student.handler.ts");
+const user_view_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/user-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/user-view.entity.ts");
+const sync_user_read_model_handler_1 = __webpack_require__(/*! ./application/handlers/sync-user-read-model.handler */ "./apps/course-service/src/application/handlers/sync-user-read-model.handler.ts");
 class NestEventBus {
     eventEmitter;
     constructor(eventEmitter) {
@@ -453,6 +522,7 @@ exports.CourseServiceModule = CourseServiceModule;
 exports.CourseServiceModule = CourseServiceModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            user_view_entity_1.UserViewEntity,
             cqrs_1.CqrsModule,
             config_1.ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
             event_emitter_1.EventEmitterModule.forRoot(),
@@ -481,15 +551,16 @@ exports.CourseServiceModule = CourseServiceModule = __decorate([
                     username: configService.get('DB_USERNAME'),
                     password: configService.get('DB_PASSWORD'),
                     database: configService.get('DB_NAME_READ'),
-                    entities: [course_view_entity_1.CourseViewEntity],
+                    entities: [course_view_entity_1.CourseViewEntity, user_view_entity_1.UserViewEntity],
                     synchronize: false,
                 }),
             }),
             typeorm_1.TypeOrmModule.forFeature([course_entity_1.CourseEntity, enrollment_entity_1.EnrollmentEntity, user_entity_1.UserEntity]),
-            typeorm_1.TypeOrmModule.forFeature([course_view_entity_1.CourseViewEntity], 'READ_CONNECTION'),
+            typeorm_1.TypeOrmModule.forFeature([course_view_entity_1.CourseViewEntity, user_view_entity_1.UserViewEntity], 'READ_CONNECTION'),
         ],
         controllers: [course_controller_1.CourseController],
         providers: [
+            sync_user_read_model_handler_1.SyncUserReadModelHandler,
             enroll_student_handler_1.EnrollStudentHandler,
             create_course_handler_1.CreateCourseHandler,
             sync_course_read_model_handler_1.SyncCourseReadModelHandler,
@@ -539,6 +610,34 @@ class CourseCreatedEvent {
     }
 }
 exports.CourseCreatedEvent = CourseCreatedEvent;
+
+
+/***/ },
+
+/***/ "./apps/course-service/src/domain/events/user-created.event.ts"
+/*!*********************************************************************!*\
+  !*** ./apps/course-service/src/domain/events/user-created.event.ts ***!
+  \*********************************************************************/
+(__unused_webpack_module, exports) {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserCreatedEvent = void 0;
+class UserCreatedEvent {
+    id;
+    email;
+    password;
+    fullName;
+    role;
+    constructor(id, email, password, fullName, role) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.fullName = fullName;
+        this.role = role;
+    }
+}
+exports.UserCreatedEvent = UserCreatedEvent;
 
 
 /***/ },
@@ -817,6 +916,60 @@ __decorate([
 exports.EnrollmentEntity = EnrollmentEntity = __decorate([
     (0, typeorm_1.Entity)('enrollments')
 ], EnrollmentEntity);
+
+
+/***/ },
+
+/***/ "./apps/course-service/src/infrastructure/persistence/entities/user-view.entity.ts"
+/*!*****************************************************************************************!*\
+  !*** ./apps/course-service/src/infrastructure/persistence/entities/user-view.entity.ts ***!
+  \*****************************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserViewEntity = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+let UserViewEntity = class UserViewEntity {
+    id;
+    email;
+    password;
+    fullName;
+    role;
+};
+exports.UserViewEntity = UserViewEntity;
+__decorate([
+    (0, typeorm_1.PrimaryColumn)({ name: 'user_id' }),
+    __metadata("design:type", String)
+], UserViewEntity.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], UserViewEntity.prototype, "email", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], UserViewEntity.prototype, "password", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'full_name' }),
+    __metadata("design:type", String)
+], UserViewEntity.prototype, "fullName", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], UserViewEntity.prototype, "role", void 0);
+exports.UserViewEntity = UserViewEntity = __decorate([
+    (0, typeorm_1.Entity)('users_view')
+], UserViewEntity);
 
 
 /***/ },

@@ -17,6 +17,8 @@ import { CourseViewEntity } from './infrastructure/persistence/entities/course-v
 import { CourseController } from './infrastructure/controllers/course.controller';
 import { EnrollmentEntity } from './infrastructure/persistence/entities/enrollment.entity';
 import { EnrollStudentHandler } from './application/handlers/enroll-student.handler';
+import { UserViewEntity } from './infrastructure/persistence/entities/user-view.entity'; // <--- IMPORTAR
+import { SyncUserReadModelHandler } from './application/handlers/sync-user-read-model.handler'; // <--- IMPORTAR
 
 // --- NUEVO EVENT BUS REAL ---
 // Usamos EventEmitter2 para enviar el evento de verdad
@@ -34,6 +36,7 @@ class NestEventBus implements EventBusPort {
 
 @Module({
   imports: [
+    UserViewEntity,
     CqrsModule,
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     EventEmitterModule.forRoot(), // <--- ACTIVAR EL MÓDULO DE EVENTOS
@@ -66,17 +69,18 @@ class NestEventBus implements EventBusPort {
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME_READ'),
-        entities: [CourseViewEntity],
+        entities: [CourseViewEntity, UserViewEntity],
         synchronize: false,
       }),
     }),
 
     TypeOrmModule.forFeature([CourseEntity, EnrollmentEntity, UserEntity]),
-    TypeOrmModule.forFeature([CourseViewEntity], 'READ_CONNECTION'),
+    TypeOrmModule.forFeature([CourseViewEntity, UserViewEntity], 'READ_CONNECTION'),
 
   ],
   controllers: [CourseController],
   providers: [
+    SyncUserReadModelHandler,
     EnrollStudentHandler,
     CreateCourseHandler,
     SyncCourseReadModelHandler, // <--- REGISTRAR EL NUEVO HANDLER
