@@ -1,18 +1,25 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { CreateCourseHandler } from '../../application/handlers/create-course.handler';
+import { CommandBus, QueryBus } from '@nestjs/cqrs'; // Importar QueryBus
+import { CreateCourseCommand } from '../../application/commands/create-course.command';
+import { GetCoursesQuery } from '../../application/queries/get-courses.query';
 
 @Controller()
 export class CourseController {
-  constructor(private readonly createCourseHandler: CreateCourseHandler) {}
+  // Inyectamos ambos buses: Command (Escribir) y Query (Leer)
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus, 
+  ) {}
 
   @MessagePattern('create.course')
-  async create(@Payload() message: any) {
-    console.log('🐯 [Kafka] Mensaje recibido:', message);
-    await this.createCourseHandler.execute({
-      id: message.id,
-      title: message.title,
-      videoUrl: message.videoUrl
-    });
+  async create(@Payload() data: any) {
+    // ... (tu código de crear sigue igual)
+  }
+
+  // --- NUEVO ENDPOINT PARA KAFKA ---
+  @MessagePattern('get.courses')
+  async getAll() {
+    return this.queryBus.execute(new GetCoursesQuery());
   }
 }

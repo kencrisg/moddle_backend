@@ -81,16 +81,20 @@ let ApiGatewayController = class ApiGatewayController {
     }
     async onModuleInit() {
         this.courseClient.subscribeToResponseOf('create.course');
+        this.courseClient.subscribeToResponseOf('get.courses');
         await this.courseClient.connect();
-        console.log('🐯 Gateway conectado a Kafka');
+        console.log('🐯 Gateway conectado y suscrito a create.course y get.courses');
     }
     createCourse(body) {
-        console.log('📨 Gateway: Recibiendo HTTP POST, enviando a Kafka...');
         return this.courseClient.send('create.course', {
             id: crypto.randomUUID(),
             title: body.title,
             videoUrl: body.videoUrl,
         });
+    }
+    async getCourses() {
+        console.log('📨 Gateway: Pidiendo lista de cursos...');
+        return this.courseClient.send('get.courses', {});
     }
 };
 exports.ApiGatewayController = ApiGatewayController;
@@ -101,6 +105,12 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], ApiGatewayController.prototype, "createCourse", null);
+__decorate([
+    (0, common_1.Get)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ApiGatewayController.prototype, "getCourses", null);
 exports.ApiGatewayController = ApiGatewayController = __decorate([
     (0, common_1.Controller)('courses'),
     __param(0, (0, common_1.Inject)('COURSE_SERVICE')),

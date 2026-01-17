@@ -50,6 +50,130 @@ exports.CreateCourseHandler = CreateCourseHandler = __decorate([
 
 /***/ },
 
+/***/ "./apps/course-service/src/application/handlers/get-courses.handler.ts"
+/*!*****************************************************************************!*\
+  !*** ./apps/course-service/src/application/handlers/get-courses.handler.ts ***!
+  \*****************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GetCoursesHandler = void 0;
+const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
+const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
+const course_view_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/course-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course-view.entity.ts");
+const get_courses_query_1 = __webpack_require__(/*! ../queries/get-courses.query */ "./apps/course-service/src/application/queries/get-courses.query.ts");
+let GetCoursesHandler = class GetCoursesHandler {
+    readRepository;
+    constructor(readRepository) {
+        this.readRepository = readRepository;
+    }
+    async execute(query) {
+        console.log('🔍 [Query] Leyendo cursos desde moodle_r (Vista Optimizada)...');
+        return this.readRepository.find();
+    }
+};
+exports.GetCoursesHandler = GetCoursesHandler;
+exports.GetCoursesHandler = GetCoursesHandler = __decorate([
+    (0, cqrs_1.QueryHandler)(get_courses_query_1.GetCoursesQuery),
+    __param(0, (0, typeorm_1.InjectRepository)(course_view_entity_1.CourseViewEntity, 'READ_CONNECTION')),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
+], GetCoursesHandler);
+
+
+/***/ },
+
+/***/ "./apps/course-service/src/application/handlers/sync-course-read-model.handler.ts"
+/*!****************************************************************************************!*\
+  !*** ./apps/course-service/src/application/handlers/sync-course-read-model.handler.ts ***!
+  \****************************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SyncCourseReadModelHandler = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
+const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
+const course_view_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/course-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course-view.entity.ts");
+const course_created_event_1 = __webpack_require__(/*! ../../domain/events/course-created.event */ "./apps/course-service/src/domain/events/course-created.event.ts");
+let SyncCourseReadModelHandler = class SyncCourseReadModelHandler {
+    readRepository;
+    constructor(readRepository) {
+        this.readRepository = readRepository;
+    }
+    async handle(event) {
+        console.log('🔄 [Sync] Sincronizando curso en moodle_r (Read DB)...');
+        const viewEntity = new course_view_entity_1.CourseViewEntity();
+        viewEntity.id = event.id;
+        viewEntity.title = event.title;
+        viewEntity.videoUrl = event.videoUrl;
+        viewEntity.isActive = true;
+        viewEntity.totalStudents = 0;
+        await this.readRepository.save(viewEntity);
+        console.log('✅ [Sync] ¡Curso sincronizado en moodle_r!');
+    }
+};
+exports.SyncCourseReadModelHandler = SyncCourseReadModelHandler;
+__decorate([
+    (0, event_emitter_1.OnEvent)('CourseCreatedEvent'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_b = typeof course_created_event_1.CourseCreatedEvent !== "undefined" && course_created_event_1.CourseCreatedEvent) === "function" ? _b : Object]),
+    __metadata("design:returntype", Promise)
+], SyncCourseReadModelHandler.prototype, "handle", null);
+exports.SyncCourseReadModelHandler = SyncCourseReadModelHandler = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, typeorm_1.InjectRepository)(course_view_entity_1.CourseViewEntity, 'READ_CONNECTION')),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
+], SyncCourseReadModelHandler);
+
+
+/***/ },
+
+/***/ "./apps/course-service/src/application/queries/get-courses.query.ts"
+/*!**************************************************************************!*\
+  !*** ./apps/course-service/src/application/queries/get-courses.query.ts ***!
+  \**************************************************************************/
+(__unused_webpack_module, exports) {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GetCoursesQuery = void 0;
+class GetCoursesQuery {
+}
+exports.GetCoursesQuery = GetCoursesQuery;
+
+
+/***/ },
+
 /***/ "./apps/course-service/src/course-service.module.ts"
 /*!**********************************************************!*\
   !*** ./apps/course-service/src/course-service.module.ts ***!
@@ -68,16 +192,26 @@ exports.CourseServiceModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
+const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
+const get_courses_handler_1 = __webpack_require__(/*! ./application/handlers/get-courses.handler */ "./apps/course-service/src/application/handlers/get-courses.handler.ts");
 const create_course_handler_1 = __webpack_require__(/*! ./application/handlers/create-course.handler */ "./apps/course-service/src/application/handlers/create-course.handler.ts");
+const sync_course_read_model_handler_1 = __webpack_require__(/*! ./application/handlers/sync-course-read-model.handler */ "./apps/course-service/src/application/handlers/sync-course-read-model.handler.ts");
 const course_repository_port_1 = __webpack_require__(/*! ./ports/course.repository.port */ "./apps/course-service/src/ports/course.repository.port.ts");
 const event_bus_port_1 = __webpack_require__(/*! ./ports/event-bus.port */ "./apps/course-service/src/ports/event-bus.port.ts");
 const postgres_course_repository_1 = __webpack_require__(/*! ./infrastructure/persistence/repositories/postgres-course.repository */ "./apps/course-service/src/infrastructure/persistence/repositories/postgres-course.repository.ts");
 const course_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/course.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course.entity.ts");
 const course_view_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/course-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course-view.entity.ts");
 const course_controller_1 = __webpack_require__(/*! ./infrastructure/controllers/course.controller */ "./apps/course-service/src/infrastructure/controllers/course.controller.ts");
-class ConsoleEventBus {
+class NestEventBus {
+    eventEmitter;
+    constructor(eventEmitter) {
+        this.eventEmitter = eventEmitter;
+    }
     async publish(event) {
-        console.log('📢 [EventBus] Publicando evento de dominio:', event.toString());
+        const eventName = event.constructor.name;
+        console.log(`📢 [EventBus] Publicando evento: ${eventName}`);
+        this.eventEmitter.emit(eventName, event);
     }
 }
 let CourseServiceModule = class CourseServiceModule {
@@ -85,8 +219,9 @@ let CourseServiceModule = class CourseServiceModule {
 exports.CourseServiceModule = CourseServiceModule;
 exports.CourseServiceModule = CourseServiceModule = __decorate([
     (0, common_1.Module)({
-        imports: [
+        imports: [cqrs_1.CqrsModule,
             config_1.ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+            event_emitter_1.EventEmitterModule.forRoot(),
             typeorm_1.TypeOrmModule.forRootAsync({
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
@@ -117,13 +252,18 @@ exports.CourseServiceModule = CourseServiceModule = __decorate([
                 }),
             }),
             typeorm_1.TypeOrmModule.forFeature([course_entity_1.CourseEntity]),
-            typeorm_1.TypeOrmModule.forFeature([course_view_entity_1.CourseViewEntity], 'READ_CONNECTION'),
-        ],
+            typeorm_1.TypeOrmModule.forFeature([course_view_entity_1.CourseViewEntity], 'READ_CONNECTION'),],
         controllers: [course_controller_1.CourseController],
         providers: [
             create_course_handler_1.CreateCourseHandler,
+            sync_course_read_model_handler_1.SyncCourseReadModelHandler,
+            get_courses_handler_1.GetCoursesHandler,
             { provide: course_repository_port_1.CourseRepositoryPort, useClass: postgres_course_repository_1.PostgresCourseRepository },
-            { provide: event_bus_port_1.EventBusPort, useClass: ConsoleEventBus },
+            {
+                provide: event_bus_port_1.EventBusPort,
+                useFactory: (eventEmitter) => new NestEventBus(eventEmitter),
+                inject: [event_emitter_1.EventEmitter2],
+            },
         ],
     })
 ], CourseServiceModule);
@@ -215,24 +355,24 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CourseController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const create_course_handler_1 = __webpack_require__(/*! ../../application/handlers/create-course.handler */ "./apps/course-service/src/application/handlers/create-course.handler.ts");
+const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
+const get_courses_query_1 = __webpack_require__(/*! ../../application/queries/get-courses.query */ "./apps/course-service/src/application/queries/get-courses.query.ts");
 let CourseController = class CourseController {
-    createCourseHandler;
-    constructor(createCourseHandler) {
-        this.createCourseHandler = createCourseHandler;
+    commandBus;
+    queryBus;
+    constructor(commandBus, queryBus) {
+        this.commandBus = commandBus;
+        this.queryBus = queryBus;
     }
-    async create(message) {
-        console.log('🐯 [Kafka] Mensaje recibido:', message);
-        await this.createCourseHandler.execute({
-            id: message.id,
-            title: message.title,
-            videoUrl: message.videoUrl
-        });
+    async create(data) {
+    }
+    async getAll() {
+        return this.queryBus.execute(new get_courses_query_1.GetCoursesQuery());
     }
 };
 exports.CourseController = CourseController;
@@ -243,9 +383,15 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CourseController.prototype, "create", null);
+__decorate([
+    (0, microservices_1.MessagePattern)('get.courses'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CourseController.prototype, "getAll", null);
 exports.CourseController = CourseController = __decorate([
     (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof create_course_handler_1.CreateCourseHandler !== "undefined" && create_course_handler_1.CreateCourseHandler) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.QueryBus !== "undefined" && cqrs_1.QueryBus) === "function" ? _b : Object])
 ], CourseController);
 
 
@@ -503,6 +649,26 @@ module.exports = require("@nestjs/core");
 
 /***/ },
 
+/***/ "@nestjs/cqrs"
+/*!*******************************!*\
+  !*** external "@nestjs/cqrs" ***!
+  \*******************************/
+(module) {
+
+module.exports = require("@nestjs/cqrs");
+
+/***/ },
+
+/***/ "@nestjs/event-emitter"
+/*!****************************************!*\
+  !*** external "@nestjs/event-emitter" ***!
+  \****************************************/
+(module) {
+
+module.exports = require("@nestjs/event-emitter");
+
+/***/ },
+
 /***/ "@nestjs/microservices"
 /*!****************************************!*\
   !*** external "@nestjs/microservices" ***!
@@ -591,7 +757,7 @@ async function bootstrap() {
         },
     });
     await app.listen();
-    console.log('Course Microservice is listening via Kafka...');
+    console.log('✅Course Microservice is listening via Kafka...');
 }
 bootstrap();
 

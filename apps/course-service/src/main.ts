@@ -20,6 +20,6 @@ async function bootstrap() {
   );
 
   await app.listen();
-  console.log('Course Microservice is listening via Kafka...');
+  console.log('✅Course Microservice is listening via Kafka...');
 }
 bootstrap();
