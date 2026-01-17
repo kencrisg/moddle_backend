@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Inject, OnModuleInit, Post } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
+import { CreateCourseDto } from '../dtos/create-course.dto';
 
 @Controller('courses')
 export class ApiGatewayController implements OnModuleInit { // <--- 1. Verifica que diga "implements OnModuleInit"
@@ -19,7 +20,7 @@ export class ApiGatewayController implements OnModuleInit { // <--- 1. Verifica 
   }
 
   @Post()
-  createCourse(@Body() body: any) {
+  createCourse(@Body() body: CreateCourseDto) {
     return this.courseClient.send('create.course', {
       id: crypto.randomUUID(),
       title: body.title,

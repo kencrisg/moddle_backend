@@ -69,11 +69,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ApiGatewayController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const create_course_dto_1 = __webpack_require__(/*! ../dtos/create-course.dto */ "./apps/api-gateway/src/infrastructure/dtos/create-course.dto.ts");
 let ApiGatewayController = class ApiGatewayController {
     courseClient;
     constructor(courseClient) {
@@ -102,7 +103,7 @@ __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [typeof (_b = typeof create_course_dto_1.CreateCourseDto !== "undefined" && create_course_dto_1.CreateCourseDto) === "function" ? _b : Object]),
     __metadata("design:returntype", void 0)
 ], ApiGatewayController.prototype, "createCourse", null);
 __decorate([
@@ -116,6 +117,46 @@ exports.ApiGatewayController = ApiGatewayController = __decorate([
     __param(0, (0, common_1.Inject)('COURSE_SERVICE')),
     __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _a : Object])
 ], ApiGatewayController);
+
+
+/***/ },
+
+/***/ "./apps/api-gateway/src/infrastructure/dtos/create-course.dto.ts"
+/*!***********************************************************************!*\
+  !*** ./apps/api-gateway/src/infrastructure/dtos/create-course.dto.ts ***!
+  \***********************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CreateCourseDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+class CreateCourseDto {
+    title;
+    videoUrl;
+}
+exports.CreateCourseDto = CreateCourseDto;
+__decorate([
+    (0, class_validator_1.IsString)({ message: 'El título debe ser un texto' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'El título no puede estar vacío' }),
+    (0, class_validator_1.MinLength)(5, { message: 'El título es muy corto, escribe al menos 5 letras' }),
+    __metadata("design:type", String)
+], CreateCourseDto.prototype, "title", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'La URL del video es obligatoria' }),
+    (0, class_validator_1.IsUrl)({}, { message: 'Enviar una URL válida (ej: https://youtube.com...)' }),
+    __metadata("design:type", String)
+], CreateCourseDto.prototype, "videoUrl", void 0);
 
 
 /***/ },
@@ -147,6 +188,16 @@ module.exports = require("@nestjs/core");
 (module) {
 
 module.exports = require("@nestjs/microservices");
+
+/***/ },
+
+/***/ "class-validator"
+/*!**********************************!*\
+  !*** external "class-validator" ***!
+  \**********************************/
+(module) {
+
+module.exports = require("class-validator");
 
 /***/ }
 
@@ -194,8 +245,13 @@ var exports = __webpack_exports__;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
 const api_gateway_module_1 = __webpack_require__(/*! ./api-gateway.module */ "./apps/api-gateway/src/api-gateway.module.ts");
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(api_gateway_module_1.ApiGatewayModule);
+    app.useGlobalPipes(new common_1.ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+    }));
     await app.listen(process.env.port ?? 3000);
 }
 bootstrap();
