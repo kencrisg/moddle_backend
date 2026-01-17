@@ -73,6 +73,7 @@ const course_repository_port_1 = __webpack_require__(/*! ./ports/course.reposito
 const event_bus_port_1 = __webpack_require__(/*! ./ports/event-bus.port */ "./apps/course-service/src/ports/event-bus.port.ts");
 const postgres_course_repository_1 = __webpack_require__(/*! ./infrastructure/persistence/repositories/postgres-course.repository */ "./apps/course-service/src/infrastructure/persistence/repositories/postgres-course.repository.ts");
 const course_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/course.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course.entity.ts");
+const course_view_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/course-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course-view.entity.ts");
 const course_controller_1 = __webpack_require__(/*! ./infrastructure/controllers/course.controller */ "./apps/course-service/src/infrastructure/controllers/course.controller.ts");
 class ConsoleEventBus {
     async publish(event) {
@@ -100,7 +101,23 @@ exports.CourseServiceModule = CourseServiceModule = __decorate([
                     synchronize: false,
                 }),
             }),
+            typeorm_1.TypeOrmModule.forRootAsync({
+                name: 'READ_CONNECTION',
+                imports: [config_1.ConfigModule],
+                inject: [config_1.ConfigService],
+                useFactory: (configService) => ({
+                    type: 'postgres',
+                    host: configService.get('DB_HOST'),
+                    port: configService.get('DB_PORT'),
+                    username: configService.get('DB_USERNAME'),
+                    password: configService.get('DB_PASSWORD'),
+                    database: configService.get('DB_NAME_READ'),
+                    entities: [course_view_entity_1.CourseViewEntity],
+                    synchronize: false,
+                }),
+            }),
             typeorm_1.TypeOrmModule.forFeature([course_entity_1.CourseEntity]),
+            typeorm_1.TypeOrmModule.forFeature([course_view_entity_1.CourseViewEntity], 'READ_CONNECTION'),
         ],
         controllers: [course_controller_1.CourseController],
         providers: [
@@ -230,6 +247,60 @@ exports.CourseController = CourseController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof create_course_handler_1.CreateCourseHandler !== "undefined" && create_course_handler_1.CreateCourseHandler) === "function" ? _a : Object])
 ], CourseController);
+
+
+/***/ },
+
+/***/ "./apps/course-service/src/infrastructure/persistence/entities/course-view.entity.ts"
+/*!*******************************************************************************************!*\
+  !*** ./apps/course-service/src/infrastructure/persistence/entities/course-view.entity.ts ***!
+  \*******************************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CourseViewEntity = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+let CourseViewEntity = class CourseViewEntity {
+    id;
+    title;
+    videoUrl;
+    isActive;
+    totalStudents;
+};
+exports.CourseViewEntity = CourseViewEntity;
+__decorate([
+    (0, typeorm_1.PrimaryColumn)({ name: 'course_id' }),
+    __metadata("design:type", String)
+], CourseViewEntity.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], CourseViewEntity.prototype, "title", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'video_url' }),
+    __metadata("design:type", String)
+], CourseViewEntity.prototype, "videoUrl", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'is_active' }),
+    __metadata("design:type", Boolean)
+], CourseViewEntity.prototype, "isActive", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'total_students' }),
+    __metadata("design:type", Number)
+], CourseViewEntity.prototype, "totalStudents", void 0);
+exports.CourseViewEntity = CourseViewEntity = __decorate([
+    (0, typeorm_1.Entity)('courses_view')
+], CourseViewEntity);
 
 
 /***/ },
