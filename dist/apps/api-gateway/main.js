@@ -69,7 +69,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e;
+var _a, _b, _c, _d, _e, _f;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ApiGatewayController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -77,6 +77,7 @@ const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestj
 const create_course_dto_1 = __webpack_require__(/*! ../dtos/create-course.dto */ "./apps/api-gateway/src/infrastructure/dtos/create-course.dto.ts");
 const enroll_student_dto_1 = __webpack_require__(/*! ../dtos/enroll-student.dto */ "./apps/api-gateway/src/infrastructure/dtos/enroll-student.dto.ts");
 const create_user_dto_1 = __webpack_require__(/*! ../dtos/create-user.dto */ "./apps/api-gateway/src/infrastructure/dtos/create-user.dto.ts");
+const login_dto_1 = __webpack_require__(/*! ../dtos/login.dto */ "./apps/api-gateway/src/infrastructure/dtos/login.dto.ts");
 let ApiGatewayController = class ApiGatewayController {
     courseClient;
     constructor(courseClient) {
@@ -88,6 +89,7 @@ let ApiGatewayController = class ApiGatewayController {
         this.courseClient.subscribeToResponseOf('enroll.student');
         this.courseClient.subscribeToResponseOf('unenroll.student');
         this.courseClient.subscribeToResponseOf('create.user');
+        this.courseClient.subscribeToResponseOf('auth.login');
         await this.courseClient.connect();
         console.log('🐯 Gateway conectado y suscrito a create.course y get.courses');
     }
@@ -113,6 +115,9 @@ let ApiGatewayController = class ApiGatewayController {
             id: crypto.randomUUID(),
             ...body
         });
+    }
+    loginUser(body) {
+        return this.courseClient.send('auth.login', body);
     }
 };
 exports.ApiGatewayController = ApiGatewayController;
@@ -150,6 +155,13 @@ __decorate([
     __metadata("design:paramtypes", [typeof (_e = typeof create_user_dto_1.CreateUserDto !== "undefined" && create_user_dto_1.CreateUserDto) === "function" ? _e : Object]),
     __metadata("design:returntype", void 0)
 ], ApiGatewayController.prototype, "createUser", null);
+__decorate([
+    (0, common_1.Post)('login'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_f = typeof login_dto_1.LoginDto !== "undefined" && login_dto_1.LoginDto) === "function" ? _f : Object]),
+    __metadata("design:returntype", void 0)
+], ApiGatewayController.prototype, "loginUser", null);
 exports.ApiGatewayController = ApiGatewayController = __decorate([
     (0, common_1.Controller)('courses'),
     __param(0, (0, common_1.Inject)('COURSE_SERVICE')),
@@ -276,6 +288,43 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], EnrollStudentDto.prototype, "courseId", void 0);
+
+
+/***/ },
+
+/***/ "./apps/api-gateway/src/infrastructure/dtos/login.dto.ts"
+/*!***************************************************************!*\
+  !*** ./apps/api-gateway/src/infrastructure/dtos/login.dto.ts ***!
+  \***************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.LoginDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+class LoginDto {
+    email;
+    password;
+}
+exports.LoginDto = LoginDto;
+__decorate([
+    (0, class_validator_1.IsEmail)({}, { message: 'El email no es válido' }),
+    __metadata("design:type", String)
+], LoginDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'La contraseña es obligatoria' }),
+    __metadata("design:type", String)
+], LoginDto.prototype, "password", void 0);
 
 
 /***/ },

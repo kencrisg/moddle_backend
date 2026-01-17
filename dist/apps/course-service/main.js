@@ -692,7 +692,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CourseController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -702,12 +702,18 @@ const get_courses_query_1 = __webpack_require__(/*! ../../application/queries/ge
 const enroll_student_command_1 = __webpack_require__(/*! ../../application/commands/enroll-student.command */ "./apps/course-service/src/application/commands/enroll-student.command.ts");
 const unenroll_student_command_1 = __webpack_require__(/*! ../../application/commands/unenroll-student.command */ "./apps/course-service/src/application/commands/unenroll-student.command.ts");
 const create_user_command_1 = __webpack_require__(/*! ../../application/commands/create-user.command */ "./apps/course-service/src/application/commands/create-user.command.ts");
+const user_view_entity_1 = __webpack_require__(/*! ../persistence/entities/user-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/user-view.entity.ts");
+const microservices_2 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
 let CourseController = class CourseController {
     commandBus;
     queryBus;
-    constructor(commandBus, queryBus) {
+    userReadRepo;
+    constructor(commandBus, queryBus, userReadRepo) {
         this.commandBus = commandBus;
         this.queryBus = queryBus;
+        this.userReadRepo = userReadRepo;
     }
     async create(data) {
     }
@@ -722,6 +728,23 @@ let CourseController = class CourseController {
     }
     async createUser(data) {
         return this.commandBus.execute(new create_user_command_1.CreateUserCommand(data.id, data.email, data.password, data.fullName));
+    }
+    async login(data) {
+        console.log(`🔐 [Read DB] Validando login para: ${data.email}`);
+        const user = await this.userReadRepo.findOneBy({ email: data.email });
+        if (!user) {
+            throw new microservices_2.RpcException('Usuario no encontrado o no sincronizado aún');
+        }
+        if (user.password !== data.password) {
+            throw new microservices_2.RpcException('Contraseña incorrecta');
+        }
+        return {
+            status: 'success',
+            userId: user.id,
+            fullName: user.fullName,
+            email: user.email,
+            role: user.role
+        };
     }
 };
 exports.CourseController = CourseController;
@@ -759,9 +782,17 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CourseController.prototype, "createUser", null);
+__decorate([
+    (0, microservices_1.MessagePattern)('auth.login'),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CourseController.prototype, "login", null);
 exports.CourseController = CourseController = __decorate([
     (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.QueryBus !== "undefined" && cqrs_1.QueryBus) === "function" ? _b : Object])
+    __param(2, (0, typeorm_1.InjectRepository)(user_view_entity_1.UserViewEntity, 'READ_CONNECTION')),
+    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.QueryBus !== "undefined" && cqrs_1.QueryBus) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object])
 ], CourseController);
 
 

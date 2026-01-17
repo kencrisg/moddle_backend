@@ -3,6 +3,7 @@ import { ClientKafka } from '@nestjs/microservices';
 import { CreateCourseDto } from '../dtos/create-course.dto';
 import { EnrollStudentDto } from '../dtos/enroll-student.dto';
 import { CreateUserDto } from '../dtos/create-user.dto';
+import { LoginDto } from '../dtos/login.dto';
 
 @Controller('courses')
 export class ApiGatewayController implements OnModuleInit { // <--- 1. Verifica que diga "implements OnModuleInit"
@@ -16,7 +17,8 @@ export class ApiGatewayController implements OnModuleInit { // <--- 1. Verifica 
     this.courseClient.subscribeToResponseOf('get.courses'); // <--- ESTA ES LA LÍNEA CLAVE
     this.courseClient.subscribeToResponseOf('enroll.student');
     this.courseClient.subscribeToResponseOf('unenroll.student');
-    this.courseClient.subscribeToResponseOf('create.user');
+    this.courseClient.subscribeToResponseOf('create.user')
+    this.courseClient.subscribeToResponseOf('auth.login');
 
 
     // 3. DESPUÉS nos conectamos (¡No al revés!)
@@ -56,5 +58,11 @@ export class ApiGatewayController implements OnModuleInit { // <--- 1. Verifica 
       id: crypto.randomUUID(),
       ...body
     });
+  }
+
+  @Post('login') // POST http://localhost:3000/courses/login
+  loginUser(@Body() body: LoginDto) {
+    // Enviamos el mensaje 'auth.login' a Kafka
+    return this.courseClient.send('auth.login', body);
   }
 }
