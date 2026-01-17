@@ -69,12 +69,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b;
+var _a, _b, _c, _d, _e;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ApiGatewayController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const create_course_dto_1 = __webpack_require__(/*! ../dtos/create-course.dto */ "./apps/api-gateway/src/infrastructure/dtos/create-course.dto.ts");
+const enroll_student_dto_1 = __webpack_require__(/*! ../dtos/enroll-student.dto */ "./apps/api-gateway/src/infrastructure/dtos/enroll-student.dto.ts");
+const create_user_dto_1 = __webpack_require__(/*! ../dtos/create-user.dto */ "./apps/api-gateway/src/infrastructure/dtos/create-user.dto.ts");
 let ApiGatewayController = class ApiGatewayController {
     courseClient;
     constructor(courseClient) {
@@ -83,6 +85,9 @@ let ApiGatewayController = class ApiGatewayController {
     async onModuleInit() {
         this.courseClient.subscribeToResponseOf('create.course');
         this.courseClient.subscribeToResponseOf('get.courses');
+        this.courseClient.subscribeToResponseOf('enroll.student');
+        this.courseClient.subscribeToResponseOf('unenroll.student');
+        this.courseClient.subscribeToResponseOf('create.user');
         await this.courseClient.connect();
         console.log('🐯 Gateway conectado y suscrito a create.course y get.courses');
     }
@@ -93,9 +98,21 @@ let ApiGatewayController = class ApiGatewayController {
             videoUrl: body.videoUrl,
         });
     }
+    enrollStudent(body) {
+        return this.courseClient.send('enroll.student', { body });
+    }
     async getCourses() {
         console.log('📨 Gateway: Pidiendo lista de cursos...');
         return this.courseClient.send('get.courses', {});
+    }
+    unenrollStudent(body) {
+        return this.courseClient.send('unenroll.student', body);
+    }
+    createUser(body) {
+        return this.courseClient.send('create.user', {
+            id: crypto.randomUUID(),
+            ...body
+        });
     }
 };
 exports.ApiGatewayController = ApiGatewayController;
@@ -107,11 +124,32 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ApiGatewayController.prototype, "createCourse", null);
 __decorate([
+    (0, common_1.Post)('enroll'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_c = typeof enroll_student_dto_1.EnrollStudentDto !== "undefined" && enroll_student_dto_1.EnrollStudentDto) === "function" ? _c : Object]),
+    __metadata("design:returntype", void 0)
+], ApiGatewayController.prototype, "enrollStudent", null);
+__decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], ApiGatewayController.prototype, "getCourses", null);
+__decorate([
+    (0, common_1.Delete)('enroll'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_d = typeof enroll_student_dto_1.EnrollStudentDto !== "undefined" && enroll_student_dto_1.EnrollStudentDto) === "function" ? _d : Object]),
+    __metadata("design:returntype", void 0)
+], ApiGatewayController.prototype, "unenrollStudent", null);
+__decorate([
+    (0, common_1.Post)('users'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_e = typeof create_user_dto_1.CreateUserDto !== "undefined" && create_user_dto_1.CreateUserDto) === "function" ? _e : Object]),
+    __metadata("design:returntype", void 0)
+], ApiGatewayController.prototype, "createUser", null);
 exports.ApiGatewayController = ApiGatewayController = __decorate([
     (0, common_1.Controller)('courses'),
     __param(0, (0, common_1.Inject)('COURSE_SERVICE')),
@@ -157,6 +195,87 @@ __decorate([
     (0, class_validator_1.IsUrl)({}, { message: 'Enviar una URL válida (ej: https://youtube.com...)' }),
     __metadata("design:type", String)
 ], CreateCourseDto.prototype, "videoUrl", void 0);
+
+
+/***/ },
+
+/***/ "./apps/api-gateway/src/infrastructure/dtos/create-user.dto.ts"
+/*!*********************************************************************!*\
+  !*** ./apps/api-gateway/src/infrastructure/dtos/create-user.dto.ts ***!
+  \*********************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CreateUserDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+class CreateUserDto {
+    email;
+    password;
+    fullName;
+}
+exports.CreateUserDto = CreateUserDto;
+__decorate([
+    (0, class_validator_1.IsEmail)({}, { message: 'El email no es válido' }),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "email", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(6, { message: 'La contraseña debe tener al menos 6 caracteres' }),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "password", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'El nombre completo es obligatorio' }),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "fullName", void 0);
+
+
+/***/ },
+
+/***/ "./apps/api-gateway/src/infrastructure/dtos/enroll-student.dto.ts"
+/*!************************************************************************!*\
+  !*** ./apps/api-gateway/src/infrastructure/dtos/enroll-student.dto.ts ***!
+  \************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.EnrollStudentDto = void 0;
+const class_validator_1 = __webpack_require__(/*! class-validator */ "class-validator");
+class EnrollStudentDto {
+    studentId;
+    courseId;
+}
+exports.EnrollStudentDto = EnrollStudentDto;
+__decorate([
+    (0, class_validator_1.IsUUID)('4'),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], EnrollStudentDto.prototype, "studentId", void 0);
+__decorate([
+    (0, class_validator_1.IsUUID)('4'),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], EnrollStudentDto.prototype, "courseId", void 0);
 
 
 /***/ },

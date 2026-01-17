@@ -1,6 +1,8 @@
-import { Body, Controller, Get, Inject, OnModuleInit, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, OnModuleInit, Post } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { CreateCourseDto } from '../dtos/create-course.dto';
+import { EnrollStudentDto } from '../dtos/enroll-student.dto';
+import { CreateUserDto } from '../dtos/create-user.dto';
 
 @Controller('courses')
 export class ApiGatewayController implements OnModuleInit { // <--- 1. Verifica que diga "implements OnModuleInit"
@@ -12,6 +14,10 @@ export class ApiGatewayController implements OnModuleInit { // <--- 1. Verifica 
     // 2. PRIMERO nos suscribimos a los temas de respuesta
     this.courseClient.subscribeToResponseOf('create.course');
     this.courseClient.subscribeToResponseOf('get.courses'); // <--- ESTA ES LA LÍNEA CLAVE
+    this.courseClient.subscribeToResponseOf('enroll.student');
+    this.courseClient.subscribeToResponseOf('unenroll.student');
+    this.courseClient.subscribeToResponseOf('create.user');
+
 
     // 3. DESPUÉS nos conectamos (¡No al revés!)
     await this.courseClient.connect();
@@ -28,9 +34,27 @@ export class ApiGatewayController implements OnModuleInit { // <--- 1. Verifica 
     });
   }
 
+  @Post('enroll')
+  enrollStudent(@Body() body: EnrollStudentDto) {
+    return this.courseClient.send('enroll.student', { body });
+  }
+
   @Get()
   async getCourses() {
     console.log('📨 Gateway: Pidiendo lista de cursos...');
     return this.courseClient.send('get.courses', {}); // <--- Esto falla si no te suscribiste arriba
+  }
+
+  @Delete('enroll') // DELETE http://localhost:3000/courses/enroll
+  unenrollStudent(@Body() body: EnrollStudentDto) {
+    return this.courseClient.send('unenroll.student', body);
+  }
+
+  @Post('users') // POST http://localhost:3000/courses/users
+  createUser(@Body() body: CreateUserDto) {
+    return this.courseClient.send('create.user', {
+      id: crypto.randomUUID(),
+      ...body
+    });
   }
 }
