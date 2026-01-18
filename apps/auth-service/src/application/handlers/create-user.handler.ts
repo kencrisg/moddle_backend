@@ -28,7 +28,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
             await this.userRepo.save(user);
             console.log(`👤 [Auth] Usuario guardado en moodle_w: ${user.email}`);
 
-            // Publish event to Kafka for other microservices
+            // Publish event to Kafka for other bdd
             const event = new UserCreatedEvent(
                 user.id,
                 user.email,

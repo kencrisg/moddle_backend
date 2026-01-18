@@ -5,7 +5,7 @@ import { CourseController } from './infrastructure/controllers/course.controller
 
 @Module({
   imports: [
-    // Registramos el Cliente Kafka para poder hablar con el otro servicio
+
     ClientsModule.register([
       {
         name: 'COURSE_SERVICE',
@@ -13,7 +13,7 @@ import { CourseController } from './infrastructure/controllers/course.controller
         options: {
           client: {
             clientId: 'api-gateway',
-            brokers: ['127.0.0.1:29092'], // Tu Docker
+            brokers: ['127.0.0.1:29092'],
           },
           consumer: {
             groupId: 'api-gateway-consumer',
