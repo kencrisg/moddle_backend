@@ -13,11 +13,9 @@ import { PostgresCourseRepository } from './infrastructure/persistence/repositor
 import { CourseEntity } from './infrastructure/persistence/entities/course.entity';
 import { CourseViewEntity } from './infrastructure/persistence/entities/course-view.entity';
 import { CourseController } from './infrastructure/controllers/course.controller';
-import { UserEventsController } from './infrastructure/controllers/user-events.controller';
 import { EnrollmentEntity } from './infrastructure/persistence/entities/enrollment.entity';
 import { EnrollStudentHandler } from './application/handlers/enroll-student.handler';
 import { UserViewEntity } from './infrastructure/persistence/entities/user-view.entity';
-import { SyncUserReadModelHandler } from './application/handlers/sync-user-read-model.handler';
 import { DeleteCourseHandler } from './application/handlers/delete-course.handler';
 import { GetUsersHandler } from './application/handlers/get-users.handler';
 import { GetCourseStudentsHandler } from './application/handlers/get-course-students.handler';
@@ -76,13 +74,12 @@ class NestEventBus implements EventBusPort {
     TypeOrmModule.forFeature([CourseEntity, EnrollmentEntity]),
     TypeOrmModule.forFeature([CourseViewEntity, UserViewEntity], 'READ_CONNECTION'),
   ],
-  controllers: [CourseController, UserEventsController],
+  controllers: [CourseController],
   providers: [
     UpdateCourseStatusHandler,
     GetCourseStudentsHandler,
     GetUsersHandler,
     DeleteCourseHandler,
-    SyncUserReadModelHandler,
     EnrollStudentHandler,
     CreateCourseHandler,
     SyncCourseReadModelHandler,

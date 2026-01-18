@@ -3,6 +3,7 @@ import { Inject } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserEntity } from '../../infrastructure/persistence/entities/user.entity';
 import { CreateUserCommand } from '../commands/create-user.command';
 import { UserCreatedEvent } from '../../domain/events/user-created.event';
@@ -14,6 +15,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
         private readonly userRepo: Repository<UserEntity>,
         @Inject('KAFKA_SERVICE')
         private readonly kafkaClient: ClientKafka,
+        private readonly eventEmitter: EventEmitter2,
     ) { }
 
     async execute(command: CreateUserCommand): Promise<void> {
@@ -28,7 +30,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
             await this.userRepo.save(user);
             console.log(`👤 [Auth] Usuario guardado en moodle_w: ${user.email} con rol: ${user.role}`);
 
-            // Publish event to Kafka for other bdd
+            // Publish event to Kafka for other microservices
             const event = new UserCreatedEvent(
                 user.id,
                 user.email,
@@ -36,8 +38,11 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
                 user.fullName,
                 user.role,
             );
-            this.kafkaClient.emit('user.created', event);
-            console.log(`📢 [Auth] Evento user.created emitido a Kafka`);
+
+            // 2. Emitir Localmente (Sincronización Read Model)
+            this.eventEmitter.emit('UserCreatedEvent', event);
+
+            console.log(`📢 [Auth] Evento user.created emitido Localmente`);
         } catch (error) {
             console.error('Error creando usuario:', error);
             throw error;

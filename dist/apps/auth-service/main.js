@@ -49,7 +49,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CreateUserHandler = void 0;
 const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
@@ -57,15 +57,18 @@ const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
+const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
 const user_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/user.entity */ "./apps/auth-service/src/infrastructure/persistence/entities/user.entity.ts");
 const create_user_command_1 = __webpack_require__(/*! ../commands/create-user.command */ "./apps/auth-service/src/application/commands/create-user.command.ts");
 const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-created.event */ "./apps/auth-service/src/domain/events/user-created.event.ts");
 let CreateUserHandler = class CreateUserHandler {
     userRepo;
     kafkaClient;
-    constructor(userRepo, kafkaClient) {
+    eventEmitter;
+    constructor(userRepo, kafkaClient, eventEmitter) {
         this.userRepo = userRepo;
         this.kafkaClient = kafkaClient;
+        this.eventEmitter = eventEmitter;
     }
     async execute(command) {
         const user = new user_entity_1.UserEntity();
@@ -78,8 +81,8 @@ let CreateUserHandler = class CreateUserHandler {
             await this.userRepo.save(user);
             console.log(`👤 [Auth] Usuario guardado en moodle_w: ${user.email} con rol: ${user.role}`);
             const event = new user_created_event_1.UserCreatedEvent(user.id, user.email, user.password, user.fullName, user.role);
-            this.kafkaClient.emit('user.created', event);
-            console.log(`📢 [Auth] Evento user.created emitido a Kafka`);
+            this.eventEmitter.emit('UserCreatedEvent', event);
+            console.log(`📢 [Auth] Evento user.created emitido Localmente`);
         }
         catch (error) {
             console.error('Error creando usuario:', error);
@@ -92,7 +95,7 @@ exports.CreateUserHandler = CreateUserHandler = __decorate([
     (0, cqrs_1.CommandHandler)(create_user_command_1.CreateUserCommand),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
     __param(1, (0, common_1.Inject)('KAFKA_SERVICE')),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _b : Object, typeof (_c = typeof event_emitter_1.EventEmitter2 !== "undefined" && event_emitter_1.EventEmitter2) === "function" ? _c : Object])
 ], CreateUserHandler);
 
 
@@ -155,6 +158,71 @@ exports.LoginHandler = LoginHandler = __decorate([
 
 /***/ },
 
+/***/ "./apps/auth-service/src/application/handlers/sync-create-user.handler.ts"
+/*!********************************************************************************!*\
+  !*** ./apps/auth-service/src/application/handlers/sync-create-user.handler.ts ***!
+  \********************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SyncUserReadModelHandler = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
+const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
+const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-created.event */ "./apps/auth-service/src/domain/events/user-created.event.ts");
+const user_view_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/user-view.entity */ "./apps/auth-service/src/infrastructure/persistence/entities/user-view.entity.ts");
+let SyncUserReadModelHandler = class SyncUserReadModelHandler {
+    readRepository;
+    dataSource;
+    constructor(readRepository, dataSource) {
+        this.readRepository = readRepository;
+        this.dataSource = dataSource;
+    }
+    async onModuleInit() { }
+    async handle(event) {
+        console.log('🔄 [Sync] Sincronizando usuario en moodle_r (Read DB)...');
+        const viewUser = new user_view_entity_1.UserViewEntity();
+        viewUser.id = event.id;
+        viewUser.email = event.email;
+        viewUser.password = event.password;
+        viewUser.fullName = event.fullName;
+        viewUser.role = event.role;
+        await this.readRepository.save(viewUser);
+        console.log('✅ [Sync] ¡Usuario sincronizado en moodle_r!');
+    }
+};
+exports.SyncUserReadModelHandler = SyncUserReadModelHandler;
+__decorate([
+    (0, event_emitter_1.OnEvent)('UserCreatedEvent'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_c = typeof user_created_event_1.UserCreatedEvent !== "undefined" && user_created_event_1.UserCreatedEvent) === "function" ? _c : Object]),
+    __metadata("design:returntype", Promise)
+], SyncUserReadModelHandler.prototype, "handle", null);
+exports.SyncUserReadModelHandler = SyncUserReadModelHandler = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, typeorm_1.InjectRepository)(user_view_entity_1.UserViewEntity, 'READ_CONNECTION')),
+    __param(1, (0, typeorm_1.InjectDataSource)('READ_CONNECTION')),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.DataSource !== "undefined" && typeorm_2.DataSource) === "function" ? _b : Object])
+], SyncUserReadModelHandler);
+
+
+/***/ },
+
 /***/ "./apps/auth-service/src/auth-service.module.ts"
 /*!******************************************************!*\
   !*** ./apps/auth-service/src/auth-service.module.ts ***!
@@ -174,6 +242,7 @@ const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
+const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const auth_controller_1 = __webpack_require__(/*! ./infrastructure/controllers/auth.controller */ "./apps/auth-service/src/infrastructure/controllers/auth.controller.ts");
 const login_handler_1 = __webpack_require__(/*! ./application/handlers/login.handler */ "./apps/auth-service/src/application/handlers/login.handler.ts");
@@ -181,6 +250,8 @@ const create_user_handler_1 = __webpack_require__(/*! ./application/handlers/cre
 const user_repository_port_1 = __webpack_require__(/*! ./ports/user.repository.port */ "./apps/auth-service/src/ports/user.repository.port.ts");
 const typeorm_user_repository_1 = __webpack_require__(/*! ./infrastructure/persistence/typeorm-user.repository */ "./apps/auth-service/src/infrastructure/persistence/typeorm-user.repository.ts");
 const user_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/user.entity */ "./apps/auth-service/src/infrastructure/persistence/entities/user.entity.ts");
+const sync_create_user_handler_1 = __webpack_require__(/*! ./application/handlers/sync-create-user.handler */ "./apps/auth-service/src/application/handlers/sync-create-user.handler.ts");
+const user_view_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/user-view.entity */ "./apps/auth-service/src/infrastructure/persistence/entities/user-view.entity.ts");
 let AuthServiceModule = class AuthServiceModule {
 };
 exports.AuthServiceModule = AuthServiceModule;
@@ -189,6 +260,7 @@ exports.AuthServiceModule = AuthServiceModule = __decorate([
         imports: [
             cqrs_1.CqrsModule,
             config_1.ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+            event_emitter_1.EventEmitterModule.forRoot(),
             typeorm_1.TypeOrmModule.forRootAsync({
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
@@ -214,11 +286,13 @@ exports.AuthServiceModule = AuthServiceModule = __decorate([
                     username: configService.get('DB_USERNAME'),
                     password: configService.get('DB_PASSWORD'),
                     database: configService.get('DB_NAME_READ'),
-                    entities: [user_entity_1.UserEntity],
+                    entities: [user_view_entity_1.UserViewEntity],
+                    autoLoadEntities: true,
                     synchronize: false,
                 }),
             }),
             typeorm_1.TypeOrmModule.forFeature([user_entity_1.UserEntity]),
+            typeorm_1.TypeOrmModule.forFeature([user_view_entity_1.UserViewEntity], 'READ_CONNECTION'),
             microservices_1.ClientsModule.register([
                 {
                     name: 'KAFKA_SERVICE',
@@ -236,6 +310,7 @@ exports.AuthServiceModule = AuthServiceModule = __decorate([
         ],
         controllers: [auth_controller_1.AuthController],
         providers: [
+            sync_create_user_handler_1.SyncUserReadModelHandler,
             login_handler_1.LoginHandler,
             create_user_handler_1.CreateUserHandler,
             {
@@ -332,7 +407,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -341,16 +416,25 @@ const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
 const create_user_command_1 = __webpack_require__(/*! ../../application/commands/create-user.command */ "./apps/auth-service/src/application/commands/create-user.command.ts");
 const login_handler_1 = __webpack_require__(/*! ../../application/handlers/login.handler */ "./apps/auth-service/src/application/handlers/login.handler.ts");
 const microservices_2 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-created.event */ "./apps/auth-service/src/domain/events/user-created.event.ts");
+const sync_create_user_handler_1 = __webpack_require__(/*! ../../application/handlers/sync-create-user.handler */ "./apps/auth-service/src/application/handlers/sync-create-user.handler.ts");
 let AuthController = class AuthController {
     commandBus;
     loginHandler;
-    constructor(commandBus, loginHandler) {
+    syncUserHandler;
+    constructor(commandBus, loginHandler, syncUserHandler) {
         this.commandBus = commandBus;
         this.loginHandler = loginHandler;
+        this.syncUserHandler = syncUserHandler;
     }
     async createUser(data) {
         console.log(`🔐 [Auth] Recibido create.user: ${data.email}`);
         return this.commandBus.execute(new create_user_command_1.CreateUserCommand(data.id, data.email, data.password, data.fullName, data.role));
+    }
+    async handleUserCreated(data) {
+        console.log(`📥 [Course] Recibido evento user.created: ${data.email}`);
+        const event = new user_created_event_1.UserCreatedEvent(data.id, data.email, data.password, data.fullName, data.role);
+        await this.syncUserHandler.handle(event);
     }
     async login(data) {
         console.log(`🔐 [Auth] Recibido auth.login para: ${data.email}`);
@@ -374,6 +458,13 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "createUser", null);
 __decorate([
+    (0, microservices_1.EventPattern)('user.created'),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "handleUserCreated", null);
+__decorate([
     (0, microservices_1.MessagePattern)('auth.login'),
     __param(0, (0, microservices_1.Payload)()),
     __metadata("design:type", Function),
@@ -382,8 +473,62 @@ __decorate([
 ], AuthController.prototype, "login", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof login_handler_1.LoginHandler !== "undefined" && login_handler_1.LoginHandler) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof login_handler_1.LoginHandler !== "undefined" && login_handler_1.LoginHandler) === "function" ? _b : Object, typeof (_c = typeof sync_create_user_handler_1.SyncUserReadModelHandler !== "undefined" && sync_create_user_handler_1.SyncUserReadModelHandler) === "function" ? _c : Object])
 ], AuthController);
+
+
+/***/ },
+
+/***/ "./apps/auth-service/src/infrastructure/persistence/entities/user-view.entity.ts"
+/*!***************************************************************************************!*\
+  !*** ./apps/auth-service/src/infrastructure/persistence/entities/user-view.entity.ts ***!
+  \***************************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserViewEntity = void 0;
+const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
+let UserViewEntity = class UserViewEntity {
+    id;
+    email;
+    password;
+    fullName;
+    role;
+};
+exports.UserViewEntity = UserViewEntity;
+__decorate([
+    (0, typeorm_1.PrimaryColumn)({ name: 'user_id' }),
+    __metadata("design:type", String)
+], UserViewEntity.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], UserViewEntity.prototype, "email", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], UserViewEntity.prototype, "password", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'full_name' }),
+    __metadata("design:type", String)
+], UserViewEntity.prototype, "fullName", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], UserViewEntity.prototype, "role", void 0);
+exports.UserViewEntity = UserViewEntity = __decorate([
+    (0, typeorm_1.Entity)('users_view')
+], UserViewEntity);
 
 
 /***/ },
@@ -586,6 +731,16 @@ module.exports = require("@nestjs/core");
 (module) {
 
 module.exports = require("@nestjs/cqrs");
+
+/***/ },
+
+/***/ "@nestjs/event-emitter"
+/*!****************************************!*\
+  !*** external "@nestjs/event-emitter" ***!
+  \****************************************/
+(module) {
+
+module.exports = require("@nestjs/event-emitter");
 
 /***/ },
 

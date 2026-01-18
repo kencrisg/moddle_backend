@@ -556,67 +556,6 @@ exports.SyncCourseReadModelHandler = SyncCourseReadModelHandler = __decorate([
 
 /***/ },
 
-/***/ "./apps/course-service/src/application/handlers/sync-user-read-model.handler.ts"
-/*!**************************************************************************************!*\
-  !*** ./apps/course-service/src/application/handlers/sync-user-read-model.handler.ts ***!
-  \**************************************************************************************/
-(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a, _b;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SyncUserReadModelHandler = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
-const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
-const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
-const user_view_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/user-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/user-view.entity.ts");
-const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-created.event */ "./apps/course-service/src/domain/events/user-created.event.ts");
-let SyncUserReadModelHandler = class SyncUserReadModelHandler {
-    readRepository;
-    constructor(readRepository) {
-        this.readRepository = readRepository;
-    }
-    async handle(event) {
-        console.log('🔄 [Sync] Sincronizando usuario en moodle_r (Read DB)...');
-        const viewUser = new user_view_entity_1.UserViewEntity();
-        viewUser.id = event.id;
-        viewUser.email = event.email;
-        viewUser.password = event.password;
-        viewUser.fullName = event.fullName;
-        viewUser.role = event.role;
-        await this.readRepository.save(viewUser);
-        console.log('✅ [Sync] ¡Usuario sincronizado en moodle_r!');
-    }
-};
-exports.SyncUserReadModelHandler = SyncUserReadModelHandler;
-__decorate([
-    (0, event_emitter_1.OnEvent)('UserCreatedEvent'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_b = typeof user_created_event_1.UserCreatedEvent !== "undefined" && user_created_event_1.UserCreatedEvent) === "function" ? _b : Object]),
-    __metadata("design:returntype", Promise)
-], SyncUserReadModelHandler.prototype, "handle", null);
-exports.SyncUserReadModelHandler = SyncUserReadModelHandler = __decorate([
-    (0, common_1.Injectable)(),
-    __param(0, (0, typeorm_1.InjectRepository)(user_view_entity_1.UserViewEntity, 'READ_CONNECTION')),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
-], SyncUserReadModelHandler);
-
-
-/***/ },
-
 /***/ "./apps/course-service/src/application/handlers/unenroll-student.handler.ts"
 /*!**********************************************************************************!*\
   !*** ./apps/course-service/src/application/handlers/unenroll-student.handler.ts ***!
@@ -825,11 +764,9 @@ const postgres_course_repository_1 = __webpack_require__(/*! ./infrastructure/pe
 const course_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/course.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course.entity.ts");
 const course_view_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/course-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course-view.entity.ts");
 const course_controller_1 = __webpack_require__(/*! ./infrastructure/controllers/course.controller */ "./apps/course-service/src/infrastructure/controllers/course.controller.ts");
-const user_events_controller_1 = __webpack_require__(/*! ./infrastructure/controllers/user-events.controller */ "./apps/course-service/src/infrastructure/controllers/user-events.controller.ts");
 const enrollment_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/enrollment.entity */ "./apps/course-service/src/infrastructure/persistence/entities/enrollment.entity.ts");
 const enroll_student_handler_1 = __webpack_require__(/*! ./application/handlers/enroll-student.handler */ "./apps/course-service/src/application/handlers/enroll-student.handler.ts");
 const user_view_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/user-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/user-view.entity.ts");
-const sync_user_read_model_handler_1 = __webpack_require__(/*! ./application/handlers/sync-user-read-model.handler */ "./apps/course-service/src/application/handlers/sync-user-read-model.handler.ts");
 const delete_course_handler_1 = __webpack_require__(/*! ./application/handlers/delete-course.handler */ "./apps/course-service/src/application/handlers/delete-course.handler.ts");
 const get_users_handler_1 = __webpack_require__(/*! ./application/handlers/get-users.handler */ "./apps/course-service/src/application/handlers/get-users.handler.ts");
 const get_course_students_handler_1 = __webpack_require__(/*! ./application/handlers/get-course-students.handler */ "./apps/course-service/src/application/handlers/get-course-students.handler.ts");
@@ -887,13 +824,12 @@ exports.CourseServiceModule = CourseServiceModule = __decorate([
             typeorm_1.TypeOrmModule.forFeature([course_entity_1.CourseEntity, enrollment_entity_1.EnrollmentEntity]),
             typeorm_1.TypeOrmModule.forFeature([course_view_entity_1.CourseViewEntity, user_view_entity_1.UserViewEntity], 'READ_CONNECTION'),
         ],
-        controllers: [course_controller_1.CourseController, user_events_controller_1.UserEventsController],
+        controllers: [course_controller_1.CourseController],
         providers: [
             update_course_status_handler_1.UpdateCourseStatusHandler,
             get_course_students_handler_1.GetCourseStudentsHandler,
             get_users_handler_1.GetUsersHandler,
             delete_course_handler_1.DeleteCourseHandler,
-            sync_user_read_model_handler_1.SyncUserReadModelHandler,
             enroll_student_handler_1.EnrollStudentHandler,
             create_course_handler_1.CreateCourseHandler,
             sync_course_read_model_handler_1.SyncCourseReadModelHandler,
@@ -985,34 +921,6 @@ class CourseStatusUpdatedEvent {
     }
 }
 exports.CourseStatusUpdatedEvent = CourseStatusUpdatedEvent;
-
-
-/***/ },
-
-/***/ "./apps/course-service/src/domain/events/user-created.event.ts"
-/*!*********************************************************************!*\
-  !*** ./apps/course-service/src/domain/events/user-created.event.ts ***!
-  \*********************************************************************/
-(__unused_webpack_module, exports) {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserCreatedEvent = void 0;
-class UserCreatedEvent {
-    id;
-    email;
-    password;
-    fullName;
-    role;
-    constructor(id, email, password, fullName, role) {
-        this.id = id;
-        this.email = email;
-        this.password = password;
-        this.fullName = fullName;
-        this.role = role;
-    }
-}
-exports.UserCreatedEvent = UserCreatedEvent;
 
 
 /***/ },
@@ -1192,59 +1100,6 @@ exports.CourseController = CourseController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.QueryBus !== "undefined" && cqrs_1.QueryBus) === "function" ? _b : Object, typeof (_c = typeof create_course_handler_1.CreateCourseHandler !== "undefined" && create_course_handler_1.CreateCourseHandler) === "function" ? _c : Object])
 ], CourseController);
-
-
-/***/ },
-
-/***/ "./apps/course-service/src/infrastructure/controllers/user-events.controller.ts"
-/*!**************************************************************************************!*\
-  !*** ./apps/course-service/src/infrastructure/controllers/user-events.controller.ts ***!
-  \**************************************************************************************/
-(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserEventsController = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const sync_user_read_model_handler_1 = __webpack_require__(/*! ../../application/handlers/sync-user-read-model.handler */ "./apps/course-service/src/application/handlers/sync-user-read-model.handler.ts");
-const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-created.event */ "./apps/course-service/src/domain/events/user-created.event.ts");
-let UserEventsController = class UserEventsController {
-    syncUserHandler;
-    constructor(syncUserHandler) {
-        this.syncUserHandler = syncUserHandler;
-    }
-    async handleUserCreated(data) {
-        console.log(`📥 [Course] Recibido evento user.created: ${data.email}`);
-        const event = new user_created_event_1.UserCreatedEvent(data.id, data.email, data.password, data.fullName, data.role);
-        await this.syncUserHandler.handle(event);
-    }
-};
-exports.UserEventsController = UserEventsController;
-__decorate([
-    (0, microservices_1.EventPattern)('user.created'),
-    __param(0, (0, microservices_1.Payload)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], UserEventsController.prototype, "handleUserCreated", null);
-exports.UserEventsController = UserEventsController = __decorate([
-    (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof sync_user_read_model_handler_1.SyncUserReadModelHandler !== "undefined" && sync_user_read_model_handler_1.SyncUserReadModelHandler) === "function" ? _a : Object])
-], UserEventsController);
 
 
 /***/ },
