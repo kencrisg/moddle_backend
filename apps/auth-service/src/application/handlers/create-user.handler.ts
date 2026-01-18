@@ -38,7 +38,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
             );
 
             // 1. Emitir a Kafka (Integración)
-            this.kafkaClient.emit('user.created', event);
+            this.kafkaClient.emit('sync.user.created', event);
 
             console.log(`📢 [Auth] Evento user.created emitido a Kafka`);
         } catch (error) {

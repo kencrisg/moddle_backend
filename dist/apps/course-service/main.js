@@ -2,6 +2,30 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./apps/course-service/src/application/commands/create-course.command.ts"
+/*!*******************************************************************************!*\
+  !*** ./apps/course-service/src/application/commands/create-course.command.ts ***!
+  \*******************************************************************************/
+(__unused_webpack_module, exports) {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CreateCourseCommand = void 0;
+class CreateCourseCommand {
+    title;
+    videoUrl;
+    id;
+    constructor(title, videoUrl, id) {
+        this.title = title;
+        this.videoUrl = videoUrl;
+        this.id = id;
+    }
+}
+exports.CreateCourseCommand = CreateCourseCommand;
+
+
+/***/ },
+
 /***/ "./apps/course-service/src/application/commands/delete-course.command.ts"
 /*!*******************************************************************************!*\
   !*** ./apps/course-service/src/application/commands/delete-course.command.ts ***!
@@ -104,33 +128,44 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CreateCourseHandler = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const course_model_1 = __webpack_require__(/*! ../../domain/model/course.model */ "./apps/course-service/src/domain/model/course.model.ts");
-const course_repository_port_1 = __webpack_require__(/*! ../../ports/course.repository.port */ "./apps/course-service/src/ports/course.repository.port.ts");
-const event_bus_port_1 = __webpack_require__(/*! ../../ports/event-bus.port */ "./apps/course-service/src/ports/event-bus.port.ts");
+const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
+const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
+const create_course_command_1 = __webpack_require__(/*! ../commands/create-course.command */ "./apps/course-service/src/application/commands/create-course.command.ts");
+const course_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/course.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course.entity.ts");
 const course_created_event_1 = __webpack_require__(/*! ../../domain/events/course-created.event */ "./apps/course-service/src/domain/events/course-created.event.ts");
 let CreateCourseHandler = class CreateCourseHandler {
-    repository;
+    courseRepo;
     eventBus;
-    constructor(repository, eventBus) {
-        this.repository = repository;
+    constructor(courseRepo, eventBus) {
+        this.courseRepo = courseRepo;
         this.eventBus = eventBus;
     }
     async execute(command) {
-        const course = course_model_1.Course.create(command.id, command.title, command.videoUrl);
-        await this.repository.save(course);
+        const course = new course_entity_1.CourseEntity();
+        course.id = command.id;
+        course.title = command.title;
+        course.videoUrl = command.videoUrl;
+        course.isActive = true;
+        course.createdAt = new Date();
+        await this.courseRepo.save(course);
         const event = new course_created_event_1.CourseCreatedEvent(course.id, course.title, course.videoUrl, course.createdAt);
-        await this.eventBus.publish(event);
+        this.eventBus.publish(event);
         console.log(`Curso creado y evento disparado: ${course.id}`);
+        return { status: 'success', courseId: course.id };
     }
 };
 exports.CreateCourseHandler = CreateCourseHandler;
 exports.CreateCourseHandler = CreateCourseHandler = __decorate([
-    (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof course_repository_port_1.CourseRepositoryPort !== "undefined" && course_repository_port_1.CourseRepositoryPort) === "function" ? _a : Object, typeof (_b = typeof event_bus_port_1.EventBusPort !== "undefined" && event_bus_port_1.EventBusPort) === "function" ? _b : Object])
+    (0, cqrs_1.CommandHandler)(create_course_command_1.CreateCourseCommand),
+    __param(0, (0, typeorm_1.InjectRepository)(course_entity_1.CourseEntity)),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.EventBus !== "undefined" && cqrs_1.EventBus) === "function" ? _b : Object])
 ], CreateCourseHandler);
 
 
@@ -161,28 +196,27 @@ exports.DeleteCourseHandler = void 0;
 const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
-const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
 const course_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/course.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course.entity.ts");
 const delete_course_command_1 = __webpack_require__(/*! ../commands/delete-course.command */ "./apps/course-service/src/application/commands/delete-course.command.ts");
 const course_deleted_event_1 = __webpack_require__(/*! ../../domain/events/course-deleted.event */ "./apps/course-service/src/domain/events/course-deleted.event.ts");
 let DeleteCourseHandler = class DeleteCourseHandler {
     courseRepo;
-    eventEmitter;
-    constructor(courseRepo, eventEmitter) {
+    eventBus;
+    constructor(courseRepo, eventBus) {
         this.courseRepo = courseRepo;
-        this.eventEmitter = eventEmitter;
+        this.eventBus = eventBus;
     }
     async execute(command) {
         await this.courseRepo.delete(command.id);
         console.log(`🗑️ [Delete] Curso eliminado de moodle_w: ${command.id}`);
-        this.eventEmitter.emit('CourseDeletedEvent', new course_deleted_event_1.CourseDeletedEvent(command.id));
+        this.eventBus.publish(new course_deleted_event_1.CourseDeletedEvent(command.id));
     }
 };
 exports.DeleteCourseHandler = DeleteCourseHandler;
 exports.DeleteCourseHandler = DeleteCourseHandler = __decorate([
     (0, cqrs_1.CommandHandler)(delete_course_command_1.DeleteCourseCommand),
     __param(0, (0, typeorm_1.InjectRepository)(course_entity_1.CourseEntity)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof event_emitter_1.EventEmitter2 !== "undefined" && event_emitter_1.EventEmitter2) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.EventBus !== "undefined" && cqrs_1.EventBus) === "function" ? _b : Object])
 ], DeleteCourseHandler);
 
 
@@ -488,18 +522,17 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SyncCourseReadModelHandler = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
+exports.SyncCourseStatusUpdatedHandler = exports.SyncCourseDeletedHandler = exports.SyncCourseCreatedHandler = void 0;
+const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
 const course_view_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/course-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course-view.entity.ts");
 const course_created_event_1 = __webpack_require__(/*! ../../domain/events/course-created.event */ "./apps/course-service/src/domain/events/course-created.event.ts");
 const course_deleted_event_1 = __webpack_require__(/*! ../../domain/events/course-deleted.event */ "./apps/course-service/src/domain/events/course-deleted.event.ts");
 const course_status_updated_event_1 = __webpack_require__(/*! ../../domain/events/course-status-updated.event */ "./apps/course-service/src/domain/events/course-status-updated.event.ts");
-let SyncCourseReadModelHandler = class SyncCourseReadModelHandler {
+let SyncCourseCreatedHandler = class SyncCourseCreatedHandler {
     readRepository;
     constructor(readRepository) {
         this.readRepository = readRepository;
@@ -515,12 +548,36 @@ let SyncCourseReadModelHandler = class SyncCourseReadModelHandler {
         await this.readRepository.save(viewEntity);
         console.log('✅ [Sync] ¡Curso sincronizado en moodle_r!');
     }
-    async handleCourseDeletion(event) {
+};
+exports.SyncCourseCreatedHandler = SyncCourseCreatedHandler;
+exports.SyncCourseCreatedHandler = SyncCourseCreatedHandler = __decorate([
+    (0, cqrs_1.EventsHandler)(course_created_event_1.CourseCreatedEvent),
+    __param(0, (0, typeorm_1.InjectRepository)(course_view_entity_1.CourseViewEntity, 'READ_CONNECTION')),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
+], SyncCourseCreatedHandler);
+let SyncCourseDeletedHandler = class SyncCourseDeletedHandler {
+    readRepository;
+    constructor(readRepository) {
+        this.readRepository = readRepository;
+    }
+    async handle(event) {
         console.log(`🔄 [Sync] Eliminando curso de moodle_r (Read DB)...`);
         await this.readRepository.delete(event.id);
         console.log(`✅ [Sync] Curso eliminado de la vista.`);
     }
-    async handleStatusUpdate(event) {
+};
+exports.SyncCourseDeletedHandler = SyncCourseDeletedHandler;
+exports.SyncCourseDeletedHandler = SyncCourseDeletedHandler = __decorate([
+    (0, cqrs_1.EventsHandler)(course_deleted_event_1.CourseDeletedEvent),
+    __param(0, (0, typeorm_1.InjectRepository)(course_view_entity_1.CourseViewEntity, 'READ_CONNECTION')),
+    __metadata("design:paramtypes", [typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object])
+], SyncCourseDeletedHandler);
+let SyncCourseStatusUpdatedHandler = class SyncCourseStatusUpdatedHandler {
+    readRepository;
+    constructor(readRepository) {
+        this.readRepository = readRepository;
+    }
+    async handle(event) {
         console.log(`🔄 [Sync] Actualizando estado en moodle_r...`);
         await this.readRepository.update(event.id, {
             isActive: event.isActive
@@ -528,30 +585,12 @@ let SyncCourseReadModelHandler = class SyncCourseReadModelHandler {
         console.log(`✅ [Sync] Curso ${event.id} ahora está ${event.isActive ? 'ACTIVO' : 'INACTIVO'} en vista.`);
     }
 };
-exports.SyncCourseReadModelHandler = SyncCourseReadModelHandler;
-__decorate([
-    (0, event_emitter_1.OnEvent)('CourseCreatedEvent'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_b = typeof course_created_event_1.CourseCreatedEvent !== "undefined" && course_created_event_1.CourseCreatedEvent) === "function" ? _b : Object]),
-    __metadata("design:returntype", Promise)
-], SyncCourseReadModelHandler.prototype, "handle", null);
-__decorate([
-    (0, event_emitter_1.OnEvent)('CourseDeletedEvent'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof course_deleted_event_1.CourseDeletedEvent !== "undefined" && course_deleted_event_1.CourseDeletedEvent) === "function" ? _c : Object]),
-    __metadata("design:returntype", Promise)
-], SyncCourseReadModelHandler.prototype, "handleCourseDeletion", null);
-__decorate([
-    (0, event_emitter_1.OnEvent)('CourseStatusUpdatedEvent'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_d = typeof course_status_updated_event_1.CourseStatusUpdatedEvent !== "undefined" && course_status_updated_event_1.CourseStatusUpdatedEvent) === "function" ? _d : Object]),
-    __metadata("design:returntype", Promise)
-], SyncCourseReadModelHandler.prototype, "handleStatusUpdate", null);
-exports.SyncCourseReadModelHandler = SyncCourseReadModelHandler = __decorate([
-    (0, common_1.Injectable)(),
+exports.SyncCourseStatusUpdatedHandler = SyncCourseStatusUpdatedHandler;
+exports.SyncCourseStatusUpdatedHandler = SyncCourseStatusUpdatedHandler = __decorate([
+    (0, cqrs_1.EventsHandler)(course_status_updated_event_1.CourseStatusUpdatedEvent),
     __param(0, (0, typeorm_1.InjectRepository)(course_view_entity_1.CourseViewEntity, 'READ_CONNECTION')),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
-], SyncCourseReadModelHandler);
+    __metadata("design:paramtypes", [typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object])
+], SyncCourseStatusUpdatedHandler);
 
 
 /***/ },
@@ -629,30 +668,29 @@ exports.UpdateCourseStatusHandler = void 0;
 const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
-const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
 const course_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/course.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course.entity.ts");
 const update_course_status_command_1 = __webpack_require__(/*! ../commands/update-course-status.command */ "./apps/course-service/src/application/commands/update-course-status.command.ts");
 const course_status_updated_event_1 = __webpack_require__(/*! ../../domain/events/course-status-updated.event */ "./apps/course-service/src/domain/events/course-status-updated.event.ts");
 let UpdateCourseStatusHandler = class UpdateCourseStatusHandler {
     courseRepo;
-    eventEmitter;
-    constructor(courseRepo, eventEmitter) {
+    eventBus;
+    constructor(courseRepo, eventBus) {
         this.courseRepo = courseRepo;
-        this.eventEmitter = eventEmitter;
+        this.eventBus = eventBus;
     }
     async execute(command) {
         console.log(`🛠️ [Write DB] Actualizando estado curso ${command.id} a: ${command.isActive}`);
         await this.courseRepo.update(command.id, {
             isActive: command.isActive
         });
-        this.eventEmitter.emit('CourseStatusUpdatedEvent', new course_status_updated_event_1.CourseStatusUpdatedEvent(command.id, command.isActive));
+        this.eventBus.publish(new course_status_updated_event_1.CourseStatusUpdatedEvent(command.id, command.isActive));
     }
 };
 exports.UpdateCourseStatusHandler = UpdateCourseStatusHandler;
 exports.UpdateCourseStatusHandler = UpdateCourseStatusHandler = __decorate([
     (0, cqrs_1.CommandHandler)(update_course_status_command_1.UpdateCourseStatusCommand),
     __param(0, (0, typeorm_1.InjectRepository)(course_entity_1.CourseEntity)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof event_emitter_1.EventEmitter2 !== "undefined" && event_emitter_1.EventEmitter2) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.EventBus !== "undefined" && cqrs_1.EventBus) === "function" ? _b : Object])
 ], UpdateCourseStatusHandler);
 
 
@@ -752,14 +790,12 @@ exports.CourseServiceModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
-const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
 const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
 const get_courses_handler_1 = __webpack_require__(/*! ./application/handlers/get-courses.handler */ "./apps/course-service/src/application/handlers/get-courses.handler.ts");
 const unenroll_student_handler_1 = __webpack_require__(/*! ./application/handlers/unenroll-student.handler */ "./apps/course-service/src/application/handlers/unenroll-student.handler.ts");
 const create_course_handler_1 = __webpack_require__(/*! ./application/handlers/create-course.handler */ "./apps/course-service/src/application/handlers/create-course.handler.ts");
 const sync_course_read_model_handler_1 = __webpack_require__(/*! ./application/handlers/sync-course-read-model.handler */ "./apps/course-service/src/application/handlers/sync-course-read-model.handler.ts");
 const course_repository_port_1 = __webpack_require__(/*! ./ports/course.repository.port */ "./apps/course-service/src/ports/course.repository.port.ts");
-const event_bus_port_1 = __webpack_require__(/*! ./ports/event-bus.port */ "./apps/course-service/src/ports/event-bus.port.ts");
 const postgres_course_repository_1 = __webpack_require__(/*! ./infrastructure/persistence/repositories/postgres-course.repository */ "./apps/course-service/src/infrastructure/persistence/repositories/postgres-course.repository.ts");
 const course_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/course.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course.entity.ts");
 const course_view_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/course-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course-view.entity.ts");
@@ -772,17 +808,6 @@ const get_users_handler_1 = __webpack_require__(/*! ./application/handlers/get-u
 const get_course_students_handler_1 = __webpack_require__(/*! ./application/handlers/get-course-students.handler */ "./apps/course-service/src/application/handlers/get-course-students.handler.ts");
 const update_course_status_handler_1 = __webpack_require__(/*! ./application/handlers/update-course-status.handler */ "./apps/course-service/src/application/handlers/update-course-status.handler.ts");
 const get_student_courses_handler_1 = __webpack_require__(/*! ./application/handlers/get-student-courses.handler */ "./apps/course-service/src/application/handlers/get-student-courses.handler.ts");
-class NestEventBus {
-    eventEmitter;
-    constructor(eventEmitter) {
-        this.eventEmitter = eventEmitter;
-    }
-    async publish(event) {
-        const eventName = event.constructor.name;
-        console.log(`📢 [EventBus] Publicando evento: ${eventName}`);
-        this.eventEmitter.emit(eventName, event);
-    }
-}
 let CourseServiceModule = class CourseServiceModule {
 };
 exports.CourseServiceModule = CourseServiceModule;
@@ -791,7 +816,6 @@ exports.CourseServiceModule = CourseServiceModule = __decorate([
         imports: [
             cqrs_1.CqrsModule,
             config_1.ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
-            event_emitter_1.EventEmitterModule.forRoot(),
             typeorm_1.TypeOrmModule.forRootAsync({
                 imports: [config_1.ConfigModule],
                 inject: [config_1.ConfigService],
@@ -832,16 +856,13 @@ exports.CourseServiceModule = CourseServiceModule = __decorate([
             delete_course_handler_1.DeleteCourseHandler,
             enroll_student_handler_1.EnrollStudentHandler,
             create_course_handler_1.CreateCourseHandler,
-            sync_course_read_model_handler_1.SyncCourseReadModelHandler,
+            sync_course_read_model_handler_1.SyncCourseCreatedHandler,
+            sync_course_read_model_handler_1.SyncCourseDeletedHandler,
+            sync_course_read_model_handler_1.SyncCourseStatusUpdatedHandler,
             get_courses_handler_1.GetCoursesHandler,
             unenroll_student_handler_1.UnenrollStudentHandler,
             get_student_courses_handler_1.GetStudentCoursesHandler,
             { provide: course_repository_port_1.CourseRepositoryPort, useClass: postgres_course_repository_1.PostgresCourseRepository },
-            {
-                provide: event_bus_port_1.EventBusPort,
-                useFactory: (eventEmitter) => new NestEventBus(eventEmitter),
-                inject: [event_emitter_1.EventEmitter2],
-            },
         ],
     })
 ], CourseServiceModule);
@@ -975,7 +996,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CourseController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -984,7 +1005,7 @@ const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
 const get_courses_query_1 = __webpack_require__(/*! ../../application/queries/get-courses.query */ "./apps/course-service/src/application/queries/get-courses.query.ts");
 const enroll_student_command_1 = __webpack_require__(/*! ../../application/commands/enroll-student.command */ "./apps/course-service/src/application/commands/enroll-student.command.ts");
 const unenroll_student_command_1 = __webpack_require__(/*! ../../application/commands/unenroll-student.command */ "./apps/course-service/src/application/commands/unenroll-student.command.ts");
-const create_course_handler_1 = __webpack_require__(/*! ../../application/handlers/create-course.handler */ "./apps/course-service/src/application/handlers/create-course.handler.ts");
+const create_course_command_1 = __webpack_require__(/*! ../../application/commands/create-course.command */ "./apps/course-service/src/application/commands/create-course.command.ts");
 const delete_course_command_1 = __webpack_require__(/*! ../../application/commands/delete-course.command */ "./apps/course-service/src/application/commands/delete-course.command.ts");
 const get_users_query_1 = __webpack_require__(/*! ../../application/queries/get-users.query */ "./apps/course-service/src/application/queries/get-users.query.ts");
 const get_course_students_query_1 = __webpack_require__(/*! ../../application/queries/get-course-students.query */ "./apps/course-service/src/application/queries/get-course-students.query.ts");
@@ -993,20 +1014,13 @@ const get_student_courses_query_1 = __webpack_require__(/*! ../../application/qu
 let CourseController = class CourseController {
     commandBus;
     queryBus;
-    createCourseHandler;
-    constructor(commandBus, queryBus, createCourseHandler) {
+    constructor(commandBus, queryBus) {
         this.commandBus = commandBus;
         this.queryBus = queryBus;
-        this.createCourseHandler = createCourseHandler;
     }
     async create(message) {
         console.log('🐯 [Course Service] Mensaje Kafka recibido:', message);
-        await this.createCourseHandler.execute({
-            id: message.id,
-            title: message.title,
-            videoUrl: message.videoUrl
-        });
-        return { status: 'success', courseId: message.id };
+        return this.commandBus.execute(new create_course_command_1.CreateCourseCommand(message.title, message.videoUrl, message.id));
     }
     async getAll() {
         return this.queryBus.execute(new get_courses_query_1.GetCoursesQuery());
@@ -1098,7 +1112,7 @@ __decorate([
 ], CourseController.prototype, "getMyCourses", null);
 exports.CourseController = CourseController = __decorate([
     (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.QueryBus !== "undefined" && cqrs_1.QueryBus) === "function" ? _b : Object, typeof (_c = typeof create_course_handler_1.CreateCourseHandler !== "undefined" && create_course_handler_1.CreateCourseHandler) === "function" ? _c : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.QueryBus !== "undefined" && cqrs_1.QueryBus) === "function" ? _b : Object])
 ], CourseController);
 
 
@@ -1408,22 +1422,6 @@ exports.CourseRepositoryPort = CourseRepositoryPort;
 
 /***/ },
 
-/***/ "./apps/course-service/src/ports/event-bus.port.ts"
-/*!*********************************************************!*\
-  !*** ./apps/course-service/src/ports/event-bus.port.ts ***!
-  \*********************************************************/
-(__unused_webpack_module, exports) {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.EventBusPort = void 0;
-class EventBusPort {
-}
-exports.EventBusPort = EventBusPort;
-
-
-/***/ },
-
 /***/ "@nestjs/common"
 /*!*********************************!*\
   !*** external "@nestjs/common" ***!
@@ -1461,16 +1459,6 @@ module.exports = require("@nestjs/core");
 (module) {
 
 module.exports = require("@nestjs/cqrs");
-
-/***/ },
-
-/***/ "@nestjs/event-emitter"
-/*!****************************************!*\
-  !*** external "@nestjs/event-emitter" ***!
-  \****************************************/
-(module) {
-
-module.exports = require("@nestjs/event-emitter");
 
 /***/ },
 

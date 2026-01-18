@@ -8,8 +8,6 @@ export class AuthController implements OnModuleInit {
     constructor(
         // 1. Cliente para AUTH (Login y Registro real)
         @Inject('AUTH_SERVICE') private readonly authClient: ClientKafka,
-
-       
     ) { }
 
     async onModuleInit() {

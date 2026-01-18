@@ -22,7 +22,7 @@ export class AuthController {
         );
     }
 
-    @EventPattern('user.created')
+    @EventPattern('sync.user.created')
     async handleUserCreated(@Payload() data: any) {
         console.log(`📥 [Auth] Recibido evento user.created desde Kafka: ${data.email}`);
         const event = new UserCreatedEvent(

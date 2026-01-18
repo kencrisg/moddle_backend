@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EventEmitterModule, EventEmitter2 } from '@nestjs/event-emitter';
 import { CqrsModule } from '@nestjs/cqrs';
 import { GetCoursesHandler } from './application/handlers/get-courses.handler';
 import { UnenrollStudentHandler } from './application/handlers/unenroll-student.handler';
 import { CreateCourseHandler } from './application/handlers/create-course.handler';
-import { SyncCourseReadModelHandler } from './application/handlers/sync-course-read-model.handler';
+import {
+  SyncCourseCreatedHandler,
+  SyncCourseDeletedHandler,
+  SyncCourseStatusUpdatedHandler
+} from './application/handlers/sync-course-read-model.handler';
 import { CourseRepositoryPort } from './ports/course.repository.port';
-import { EventBusPort } from './ports/event-bus.port';
 import { PostgresCourseRepository } from './infrastructure/persistence/repositories/postgres-course.repository';
 import { CourseEntity } from './infrastructure/persistence/entities/course.entity';
 import { CourseViewEntity } from './infrastructure/persistence/entities/course-view.entity';
@@ -22,21 +24,10 @@ import { GetCourseStudentsHandler } from './application/handlers/get-course-stud
 import { UpdateCourseStatusHandler } from './application/handlers/update-course-status.handler';
 import { GetStudentCoursesHandler } from './application/handlers/get-student-courses.handler';
 
-class NestEventBus implements EventBusPort {
-  constructor(private readonly eventEmitter: EventEmitter2) { }
-
-  async publish(event: any): Promise<void> {
-    const eventName = event.constructor.name;
-    console.log(`📢 [EventBus] Publicando evento: ${eventName}`);
-    this.eventEmitter.emit(eventName, event);
-  }
-}
-
 @Module({
   imports: [
     CqrsModule,
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
-    EventEmitterModule.forRoot(),
 
     // Write DB Connection
     TypeOrmModule.forRootAsync({
@@ -82,18 +73,14 @@ class NestEventBus implements EventBusPort {
     DeleteCourseHandler,
     EnrollStudentHandler,
     CreateCourseHandler,
-    SyncCourseReadModelHandler,
+    SyncCourseCreatedHandler,
+    SyncCourseDeletedHandler,
+    SyncCourseStatusUpdatedHandler,
     GetCoursesHandler,
     UnenrollStudentHandler,
     GetStudentCoursesHandler,
 
     { provide: CourseRepositoryPort, useClass: PostgresCourseRepository },
-
-    {
-      provide: EventBusPort,
-      useFactory: (eventEmitter: EventEmitter2) => new NestEventBus(eventEmitter),
-      inject: [EventEmitter2],
-    },
   ],
 })
 export class CourseServiceModule { }

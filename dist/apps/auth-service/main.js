@@ -78,7 +78,7 @@ let CreateUserHandler = class CreateUserHandler {
             await this.userRepo.save(user);
             console.log(`👤 [Auth] Usuario guardado en moodle_w: ${user.email} con rol: ${user.role}`);
             const event = new user_created_event_1.UserCreatedEvent(user.id, user.email, user.password, user.fullName, user.role);
-            this.kafkaClient.emit('user.created', event);
+            this.kafkaClient.emit('sync.user.created', event);
             console.log(`📢 [Auth] Evento user.created emitido a Kafka`);
         }
         catch (error) {
@@ -446,7 +446,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "createUser", null);
 __decorate([
-    (0, microservices_1.EventPattern)('user.created'),
+    (0, microservices_1.EventPattern)('sync.user.created'),
     __param(0, (0, microservices_1.Payload)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

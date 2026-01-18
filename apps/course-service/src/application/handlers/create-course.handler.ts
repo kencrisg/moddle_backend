@@ -1,25 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateCourseCommand } from '../commands/create-course.command';
-import { Course } from '../../domain/model/course.model';
-import { CourseRepositoryPort } from '../../ports/course.repository.port';
-import { EventBusPort } from '../../ports/event-bus.port';
+import { CourseEntity } from '../../infrastructure/persistence/entities/course.entity';
 import { CourseCreatedEvent } from '../../domain/events/course-created.event';
 
-@Injectable()
-export class CreateCourseHandler {
+@CommandHandler(CreateCourseCommand)
+export class CreateCourseHandler implements ICommandHandler<CreateCourseCommand> {
   constructor(
-    private readonly repository: CourseRepositoryPort, // Para guardar en Postgres (Write)
-    private readonly eventBus: EventBusPort,         // Para avisar a Kafka
-  ) {}
+    @InjectRepository(CourseEntity)
+    private readonly courseRepo: Repository<CourseEntity>,
+    private readonly eventBus: EventBus,
+  ) { }
 
-  async execute(command: CreateCourseCommand): Promise<void> {
-    // 1. Crear la entidad de Dominio (Aquí van las validaciones de negocio)
-    const course = Course.create(command.id, command.title, command.videoUrl);
+  async execute(command: CreateCourseCommand): Promise<{ status: string; courseId: string }> {
+    // 1. Crear la entidad
+    const course = new CourseEntity();
+    course.id = command.id;
+    course.title = command.title;
+    course.videoUrl = command.videoUrl;
+    course.isActive = true;
+    course.createdAt = new Date();
 
     // 2. Guardar en Base de Datos de Escritura (Moodle_W)
-    await this.repository.save(course);
+    await this.courseRepo.save(course);
 
-    // 3. Crear el Evento de Dominio
+    // 3. Crear y publicar el Evento de Dominio
     const event = new CourseCreatedEvent(
       course.id,
       course.title,
@@ -27,9 +33,10 @@ export class CreateCourseHandler {
       course.createdAt,
     );
 
-    // 4. Publicar el Evento en Kafka (Para que el otro lado se entere)
-    await this.eventBus.publish(event);
-    
+    // 4. Publicar al EventBus interno (para que SyncCourseReadModelHandler lo capture)
+    this.eventBus.publish(event);
+
     console.log(`Curso creado y evento disparado: ${course.id}`);
+    return { status: 'success', courseId: course.id };
   }
 } 
