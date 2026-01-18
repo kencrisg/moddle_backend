@@ -5,6 +5,7 @@ import { GetCoursesQuery } from '../../application/queries/get-courses.query';
 import { EnrollStudentCommand } from '../../application/commands/enroll-student.command';
 import { UnenrollStudentCommand } from '../../application/commands/unenroll-student.command';
 import { CreateCourseHandler } from '../../application/handlers/create-course.handler';
+import { DeleteCourseCommand } from '../../application/commands/delete-course.command';
 
 @Controller()
 export class CourseController {
@@ -42,4 +43,10 @@ export class CourseController {
   async unenroll(@Payload() data: any) {
     return this.commandBus.execute(new UnenrollStudentCommand(data.studentId, data.courseId));
   }
+
+  @MessagePattern('delete.course')
+  async deleteCourse(@Payload() data: any) {
+    return this.commandBus.execute(new DeleteCourseCommand(data.id));
+  }
+  
 }

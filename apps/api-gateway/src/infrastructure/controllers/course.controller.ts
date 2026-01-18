@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, OnModuleInit, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Inject, OnModuleInit, Param, Post } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { CreateCourseDto } from '../dtos/create-course.dto';
 import { EnrollStudentDto } from '../dtos/enroll-student.dto';
@@ -14,6 +14,7 @@ export class CourseController implements OnModuleInit {
         this.kafkaClient.subscribeToResponseOf('get.courses');
         this.kafkaClient.subscribeToResponseOf('enroll.student');
         this.kafkaClient.subscribeToResponseOf('unenroll.student');
+        this.kafkaClient.subscribeToResponseOf('delete.course');
         await this.kafkaClient.connect();
     }
 
@@ -29,6 +30,11 @@ export class CourseController implements OnModuleInit {
     @Get()
     async getCourses() {
         return this.kafkaClient.send('get.courses', {});
+    }
+
+    @Delete(':id')
+    deleteCourse(@Param('id') id: string) {
+        return this.kafkaClient.send('delete.course', { id });
     }
 
     @Post('enroll')

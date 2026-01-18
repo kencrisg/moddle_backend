@@ -157,6 +157,7 @@ let CourseController = class CourseController {
         this.kafkaClient.subscribeToResponseOf('get.courses');
         this.kafkaClient.subscribeToResponseOf('enroll.student');
         this.kafkaClient.subscribeToResponseOf('unenroll.student');
+        this.kafkaClient.subscribeToResponseOf('delete.course');
         await this.kafkaClient.connect();
     }
     createCourse(body) {
@@ -168,6 +169,9 @@ let CourseController = class CourseController {
     }
     async getCourses() {
         return this.kafkaClient.send('get.courses', {});
+    }
+    deleteCourse(id) {
+        return this.kafkaClient.send('delete.course', { id });
     }
     enrollStudent(body) {
         return this.kafkaClient.send('enroll.student', { body });
@@ -190,6 +194,13 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], CourseController.prototype, "getCourses", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CourseController.prototype, "deleteCourse", null);
 __decorate([
     (0, common_1.Post)('enroll'),
     __param(0, (0, common_1.Body)()),
