@@ -599,7 +599,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CourseController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -608,14 +608,24 @@ const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
 const get_courses_query_1 = __webpack_require__(/*! ../../application/queries/get-courses.query */ "./apps/course-service/src/application/queries/get-courses.query.ts");
 const enroll_student_command_1 = __webpack_require__(/*! ../../application/commands/enroll-student.command */ "./apps/course-service/src/application/commands/enroll-student.command.ts");
 const unenroll_student_command_1 = __webpack_require__(/*! ../../application/commands/unenroll-student.command */ "./apps/course-service/src/application/commands/unenroll-student.command.ts");
+const create_course_handler_1 = __webpack_require__(/*! ../../application/handlers/create-course.handler */ "./apps/course-service/src/application/handlers/create-course.handler.ts");
 let CourseController = class CourseController {
     commandBus;
     queryBus;
-    constructor(commandBus, queryBus) {
+    createCourseHandler;
+    constructor(commandBus, queryBus, createCourseHandler) {
         this.commandBus = commandBus;
         this.queryBus = queryBus;
+        this.createCourseHandler = createCourseHandler;
     }
-    async create(data) {
+    async create(message) {
+        console.log('🐯 [Course Service] Mensaje Kafka recibido:', message);
+        await this.createCourseHandler.execute({
+            id: message.id,
+            title: message.title,
+            videoUrl: message.videoUrl
+        });
+        return { status: 'success', courseId: message.id };
     }
     async getAll() {
         return this.queryBus.execute(new get_courses_query_1.GetCoursesQuery());
@@ -657,7 +667,7 @@ __decorate([
 ], CourseController.prototype, "unenroll", null);
 exports.CourseController = CourseController = __decorate([
     (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.QueryBus !== "undefined" && cqrs_1.QueryBus) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.QueryBus !== "undefined" && cqrs_1.QueryBus) === "function" ? _b : Object, typeof (_c = typeof create_course_handler_1.CreateCourseHandler !== "undefined" && create_course_handler_1.CreateCourseHandler) === "function" ? _c : Object])
 ], CourseController);
 
 

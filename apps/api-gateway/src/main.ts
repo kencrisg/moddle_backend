@@ -11,5 +11,6 @@ async function bootstrap() {
   }));
   app.useGlobalFilters(new RpcExceptionFilter());
   await app.listen(process.env.port ?? 3000);
+  console.log(`🚀 API Gateway is running `);
 }
 bootstrap();
