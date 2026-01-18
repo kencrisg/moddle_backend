@@ -41,6 +41,19 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
                         },
                     },
                 },
+                {
+                    name: 'AUTH_SERVICE',
+                    transport: microservices_1.Transport.KAFKA,
+                    options: {
+                        client: {
+                            clientId: 'api-gateway-auth',
+                            brokers: ['127.0.0.1:29092'],
+                        },
+                        consumer: {
+                            groupId: 'auth-consumer-gateway',
+                        },
+                    },
+                },
             ]),
         ],
         controllers: [auth_controller_1.AuthController, course_controller_1.CourseController],
@@ -70,7 +83,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -78,23 +91,31 @@ const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestj
 const create_user_dto_1 = __webpack_require__(/*! ../dtos/create-user.dto */ "./apps/api-gateway/src/infrastructure/dtos/create-user.dto.ts");
 const login_dto_1 = __webpack_require__(/*! ../dtos/login.dto */ "./apps/api-gateway/src/infrastructure/dtos/login.dto.ts");
 let AuthController = class AuthController {
-    kafkaClient;
-    constructor(kafkaClient) {
-        this.kafkaClient = kafkaClient;
+    authClient;
+    courseClient;
+    constructor(authClient, courseClient) {
+        this.authClient = authClient;
+        this.courseClient = courseClient;
     }
     async onModuleInit() {
-        this.kafkaClient.subscribeToResponseOf('create.user');
-        this.kafkaClient.subscribeToResponseOf('auth.login');
-        await this.kafkaClient.connect();
+        this.authClient.subscribeToResponseOf('create.user');
+        this.authClient.subscribeToResponseOf('auth.login');
+        this.courseClient.subscribeToResponseOf('get.users');
+        await this.authClient.connect();
+        await this.courseClient.connect();
     }
     createUser(body) {
-        return this.kafkaClient.send('create.user', {
+        return this.authClient.send('create.user', {
             id: crypto.randomUUID(),
             ...body,
         });
     }
     loginUser(body) {
-        return this.kafkaClient.send('auth.login', body);
+        return this.authClient.send('auth.login', body);
+    }
+    getUsers() {
+        console.log('📨 Gateway: Pidiendo estudiantes a la Vista de Cursos...');
+        return this.courseClient.send('get.users', { role: 's' });
     }
 };
 exports.AuthController = AuthController;
@@ -102,20 +123,27 @@ __decorate([
     (0, common_1.Post)('register'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_b = typeof create_user_dto_1.CreateUserDto !== "undefined" && create_user_dto_1.CreateUserDto) === "function" ? _b : Object]),
+    __metadata("design:paramtypes", [typeof (_c = typeof create_user_dto_1.CreateUserDto !== "undefined" && create_user_dto_1.CreateUserDto) === "function" ? _c : Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "createUser", null);
 __decorate([
     (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof login_dto_1.LoginDto !== "undefined" && login_dto_1.LoginDto) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [typeof (_d = typeof login_dto_1.LoginDto !== "undefined" && login_dto_1.LoginDto) === "function" ? _d : Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "loginUser", null);
+__decorate([
+    (0, common_1.Get)('users'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "getUsers", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
-    __param(0, (0, common_1.Inject)('COURSE_SERVICE')),
-    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _a : Object])
+    __param(0, (0, common_1.Inject)('AUTH_SERVICE')),
+    __param(1, (0, common_1.Inject)('COURSE_SERVICE')),
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _a : Object, typeof (_b = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _b : Object])
 ], AuthController);
 
 
@@ -158,7 +186,26 @@ let CourseController = class CourseController {
         this.kafkaClient.subscribeToResponseOf('enroll.student');
         this.kafkaClient.subscribeToResponseOf('unenroll.student');
         this.kafkaClient.subscribeToResponseOf('delete.course');
+        this.kafkaClient.subscribeToResponseOf('get.course.students');
+        this.kafkaClient.subscribeToResponseOf('update.course.status');
         await this.kafkaClient.connect();
+    }
+    enrollStudent(body) {
+        return this.kafkaClient.send('enroll.student', body);
+    }
+    unenrollStudent(body) {
+        return this.kafkaClient.send('unenroll.student', body);
+    }
+    getCourseStudents(id) {
+        console.log(`📨 Gateway: Pidiendo estudiantes del curso ${id}`);
+        return this.kafkaClient.send('get.course.students', { courseId: id });
+    }
+    updateStatus(id, body) {
+        console.log(`🔄 Gateway: Cambiando estado del curso ${id} a ${body.isActive}`);
+        return this.kafkaClient.send('update.course.status', {
+            id,
+            isActive: body.isActive
+        });
     }
     createCourse(body) {
         return this.kafkaClient.send('create.course', {
@@ -173,19 +220,42 @@ let CourseController = class CourseController {
     deleteCourse(id) {
         return this.kafkaClient.send('delete.course', { id });
     }
-    enrollStudent(body) {
-        return this.kafkaClient.send('enroll.student', { body });
-    }
-    unenrollStudent(body) {
-        return this.kafkaClient.send('unenroll.student', body);
-    }
 };
 exports.CourseController = CourseController;
+__decorate([
+    (0, common_1.Post)('enroll'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_b = typeof enroll_student_dto_1.EnrollStudentDto !== "undefined" && enroll_student_dto_1.EnrollStudentDto) === "function" ? _b : Object]),
+    __metadata("design:returntype", void 0)
+], CourseController.prototype, "enrollStudent", null);
+__decorate([
+    (0, common_1.Delete)('enroll'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_c = typeof enroll_student_dto_1.EnrollStudentDto !== "undefined" && enroll_student_dto_1.EnrollStudentDto) === "function" ? _c : Object]),
+    __metadata("design:returntype", void 0)
+], CourseController.prototype, "unenrollStudent", null);
+__decorate([
+    (0, common_1.Get)(':id/students'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CourseController.prototype, "getCourseStudents", null);
+__decorate([
+    (0, common_1.Patch)(':id/status'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], CourseController.prototype, "updateStatus", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_b = typeof create_course_dto_1.CreateCourseDto !== "undefined" && create_course_dto_1.CreateCourseDto) === "function" ? _b : Object]),
+    __metadata("design:paramtypes", [typeof (_d = typeof create_course_dto_1.CreateCourseDto !== "undefined" && create_course_dto_1.CreateCourseDto) === "function" ? _d : Object]),
     __metadata("design:returntype", void 0)
 ], CourseController.prototype, "createCourse", null);
 __decorate([
@@ -201,20 +271,6 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], CourseController.prototype, "deleteCourse", null);
-__decorate([
-    (0, common_1.Post)('enroll'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof enroll_student_dto_1.EnrollStudentDto !== "undefined" && enroll_student_dto_1.EnrollStudentDto) === "function" ? _c : Object]),
-    __metadata("design:returntype", void 0)
-], CourseController.prototype, "enrollStudent", null);
-__decorate([
-    (0, common_1.Delete)('enroll'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_d = typeof enroll_student_dto_1.EnrollStudentDto !== "undefined" && enroll_student_dto_1.EnrollStudentDto) === "function" ? _d : Object]),
-    __metadata("design:returntype", void 0)
-], CourseController.prototype, "unenrollStudent", null);
 exports.CourseController = CourseController = __decorate([
     (0, common_1.Controller)('courses'),
     __param(0, (0, common_1.Inject)('COURSE_SERVICE')),

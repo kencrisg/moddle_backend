@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { CourseViewEntity } from '../../infrastructure/persistence/entities/course-view.entity';
 import { CourseCreatedEvent } from '../../domain/events/course-created.event';
 import { CourseDeletedEvent } from '../../domain/events/course-deleted.event';
+import { CourseStatusUpdatedEvent } from '../../domain/events/course-status-updated.event';
 
 @Injectable()
 export class SyncCourseReadModelHandler {
@@ -37,5 +38,16 @@ export class SyncCourseReadModelHandler {
     console.log(`🔄 [Sync] Eliminando curso de moodle_r (Read DB)...`);
     await this.readRepository.delete(event.id);
     console.log(`✅ [Sync] Curso eliminado de la vista.`);
+  }
+
+  @OnEvent('CourseStatusUpdatedEvent')
+  async handleStatusUpdate(event: CourseStatusUpdatedEvent) {
+    console.log(`🔄 [Sync] Actualizando estado en moodle_r...`);
+
+    await this.readRepository.update(event.id, {
+      isActive: event.isActive
+    });
+
+    console.log(`✅ [Sync] Curso ${event.id} ahora está ${event.isActive ? 'ACTIVO' : 'INACTIVO'} en vista.`);
   }
 }

@@ -19,6 +19,9 @@ import { EnrollStudentHandler } from './application/handlers/enroll-student.hand
 import { UserViewEntity } from './infrastructure/persistence/entities/user-view.entity';
 import { SyncUserReadModelHandler } from './application/handlers/sync-user-read-model.handler';
 import { DeleteCourseHandler } from './application/handlers/delete-course.handler';
+import { GetUsersHandler } from './application/handlers/get-users.handler';
+import { GetCourseStudentsHandler } from './application/handlers/get-course-students.handler';
+import { UpdateCourseStatusHandler } from './application/handlers/update-course-status.handler';
 
 class NestEventBus implements EventBusPort {
   constructor(private readonly eventEmitter: EventEmitter2) { }
@@ -74,6 +77,9 @@ class NestEventBus implements EventBusPort {
   ],
   controllers: [CourseController, UserEventsController],
   providers: [
+    UpdateCourseStatusHandler,
+    GetCourseStudentsHandler,
+    GetUsersHandler,
     DeleteCourseHandler,
     SyncUserReadModelHandler,
     EnrollStudentHandler,

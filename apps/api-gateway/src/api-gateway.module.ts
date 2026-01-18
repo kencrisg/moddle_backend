@@ -20,6 +20,19 @@ import { CourseController } from './infrastructure/controllers/course.controller
           },
         },
       },
+      {
+        name: 'AUTH_SERVICE',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            clientId: 'api-gateway-auth',
+            brokers: ['127.0.0.1:29092'],
+          },
+          consumer: {
+            groupId: 'auth-consumer-gateway',
+          },
+        },
+      },
     ]),
   ],
   controllers: [AuthController, CourseController],

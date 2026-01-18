@@ -1,13 +1,13 @@
-import { Entity, PrimaryColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('enrollments')
 export class EnrollmentEntity {
-  @PrimaryColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'course_id' })
+  @Column({ name: 'course_id', nullable: false })
   courseId: string;
 
-  @Column({ name: 'student_id' })
+  @Column({ name: 'student_id', nullable: false })
   studentId: string;
 }
