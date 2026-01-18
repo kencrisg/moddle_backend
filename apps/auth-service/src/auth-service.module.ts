@@ -1,39 +1,80 @@
 import { Module } from '@nestjs/common';
-import { AuthServiceController } from './infrastructure/controllers/auth-service.controller';
-import { LoginHandler } from './application/handlers/login.handler';
-import { UserRepositoryPort } from './ports/user.repository.port';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CqrsModule } from '@nestjs/cqrs';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
-// MOCK TEMPORAL: Implementación falsa del repositorio para que compile
-// (Luego pondremos la de verdad con TypeORM)
-class InMemoryUserRepository implements UserRepositoryPort {
-  async save(user: any): Promise<void> {}
-  async findByEmail(email: string): Promise<any> { 
-    // Usuario Falso para probar login
-    if (email === 'admin@test.com') {
-      return { 
-        id: '1', 
-        email, 
-        passwordHash: '123456', 
-        role: 'a', 
-        isActive: true,
-        canLogin: () => true,
-        isAdmin: () => true
-      }; 
-    }
-    return null; 
-  }
-  async findById(id: string): Promise<any> { return null; }
-}
+import { AuthController } from './infrastructure/controllers/auth.controller';
+import { LoginHandler } from './application/handlers/login.handler';
+import { CreateUserHandler } from './application/handlers/create-user.handler';
+import { UserRepositoryPort } from './ports/user.repository.port';
+import { TypeOrmUserRepository } from './infrastructure/persistence/typeorm-user.repository';
+import { UserEntity } from './infrastructure/persistence/entities/user.entity';
 
 @Module({
-  imports: [],
-  controllers: [AuthServiceController],
+  imports: [
+    CqrsModule,
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+
+    // Write DB Connection
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_NAME_WRITE'),
+        autoLoadEntities: true,
+        synchronize: false,
+      }),
+    }),
+
+    // Read DB Connection
+    TypeOrmModule.forRootAsync({
+      name: 'READ_CONNECTION',
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_NAME_READ'),
+        entities: [UserEntity],
+        synchronize: false,
+      }),
+    }),
+
+    TypeOrmModule.forFeature([UserEntity]),
+
+    // Kafka Client to emit events
+    ClientsModule.register([
+      {
+        name: 'KAFKA_SERVICE',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            brokers: ['127.0.0.1:29092'],
+          },
+          producer: {
+            allowAutoTopicCreation: true,
+          },
+        },
+      },
+    ]),
+  ],
+  controllers: [AuthController],
   providers: [
-    LoginHandler, // Registramos el Caso de Uso
+    LoginHandler,
+    CreateUserHandler,
     {
-      provide: UserRepositoryPort, // Cuando alguien pida el Puerto...
-      useClass: InMemoryUserRepository, // ...le damos esta implementación (Inyección de Dependencias)
+      provide: UserRepositoryPort,
+      useClass: TypeOrmUserRepository,
     },
   ],
 })
-export class AuthServiceModule {}
+export class AuthServiceModule { }

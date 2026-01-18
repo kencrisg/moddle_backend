@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-// OJO AQUÍ: La ruta correcta baja a infrastructure/controllers
-import { ApiGatewayController } from './infrastructure/controllers/api-gateway.controller';
+import { AuthController } from './infrastructure/controllers/auth.controller';
+import { CourseController } from './infrastructure/controllers/course.controller';
 
 @Module({
   imports: [
@@ -22,7 +22,7 @@ import { ApiGatewayController } from './infrastructure/controllers/api-gateway.c
       },
     ]),
   ],
-  controllers: [ApiGatewayController], // Usamos el controller importado correctamente
-  providers: [], // Sin servicios por ahora, el controller hace el trabajo
+  controllers: [AuthController, CourseController],
+  providers: [],
 })
-export class ApiGatewayModule {}
+export class ApiGatewayModule { }

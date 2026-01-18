@@ -19,7 +19,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ApiGatewayModule = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const api_gateway_controller_1 = __webpack_require__(/*! ./infrastructure/controllers/api-gateway.controller */ "./apps/api-gateway/src/infrastructure/controllers/api-gateway.controller.ts");
+const auth_controller_1 = __webpack_require__(/*! ./infrastructure/controllers/auth.controller */ "./apps/api-gateway/src/infrastructure/controllers/auth.controller.ts");
+const course_controller_1 = __webpack_require__(/*! ./infrastructure/controllers/course.controller */ "./apps/api-gateway/src/infrastructure/controllers/course.controller.ts");
 let ApiGatewayModule = class ApiGatewayModule {
 };
 exports.ApiGatewayModule = ApiGatewayModule;
@@ -42,7 +43,7 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
                 },
             ]),
         ],
-        controllers: [api_gateway_controller_1.ApiGatewayController],
+        controllers: [auth_controller_1.AuthController, course_controller_1.CourseController],
         providers: [],
     })
 ], ApiGatewayModule);
@@ -50,10 +51,10 @@ exports.ApiGatewayModule = ApiGatewayModule = __decorate([
 
 /***/ },
 
-/***/ "./apps/api-gateway/src/infrastructure/controllers/api-gateway.controller.ts"
-/*!***********************************************************************************!*\
-  !*** ./apps/api-gateway/src/infrastructure/controllers/api-gateway.controller.ts ***!
-  \***********************************************************************************/
+/***/ "./apps/api-gateway/src/infrastructure/controllers/auth.controller.ts"
+/*!****************************************************************************!*\
+  !*** ./apps/api-gateway/src/infrastructure/controllers/auth.controller.ts ***!
+  \****************************************************************************/
 (__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -69,104 +70,145 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d, _e, _f;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ApiGatewayController = void 0;
+exports.AuthController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const create_user_dto_1 = __webpack_require__(/*! ../dtos/create-user.dto */ "./apps/api-gateway/src/infrastructure/dtos/create-user.dto.ts");
+const login_dto_1 = __webpack_require__(/*! ../dtos/login.dto */ "./apps/api-gateway/src/infrastructure/dtos/login.dto.ts");
+let AuthController = class AuthController {
+    kafkaClient;
+    constructor(kafkaClient) {
+        this.kafkaClient = kafkaClient;
+    }
+    async onModuleInit() {
+        this.kafkaClient.subscribeToResponseOf('create.user');
+        this.kafkaClient.subscribeToResponseOf('auth.login');
+        await this.kafkaClient.connect();
+    }
+    createUser(body) {
+        return this.kafkaClient.send('create.user', {
+            id: crypto.randomUUID(),
+            ...body,
+        });
+    }
+    loginUser(body) {
+        return this.kafkaClient.send('auth.login', body);
+    }
+};
+exports.AuthController = AuthController;
+__decorate([
+    (0, common_1.Post)('register'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_b = typeof create_user_dto_1.CreateUserDto !== "undefined" && create_user_dto_1.CreateUserDto) === "function" ? _b : Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "createUser", null);
+__decorate([
+    (0, common_1.Post)('login'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_c = typeof login_dto_1.LoginDto !== "undefined" && login_dto_1.LoginDto) === "function" ? _c : Object]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "loginUser", null);
+exports.AuthController = AuthController = __decorate([
+    (0, common_1.Controller)('auth'),
+    __param(0, (0, common_1.Inject)('COURSE_SERVICE')),
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _a : Object])
+], AuthController);
+
+
+/***/ },
+
+/***/ "./apps/api-gateway/src/infrastructure/controllers/course.controller.ts"
+/*!******************************************************************************!*\
+  !*** ./apps/api-gateway/src/infrastructure/controllers/course.controller.ts ***!
+  \******************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b, _c, _d;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CourseController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const create_course_dto_1 = __webpack_require__(/*! ../dtos/create-course.dto */ "./apps/api-gateway/src/infrastructure/dtos/create-course.dto.ts");
 const enroll_student_dto_1 = __webpack_require__(/*! ../dtos/enroll-student.dto */ "./apps/api-gateway/src/infrastructure/dtos/enroll-student.dto.ts");
-const create_user_dto_1 = __webpack_require__(/*! ../dtos/create-user.dto */ "./apps/api-gateway/src/infrastructure/dtos/create-user.dto.ts");
-const login_dto_1 = __webpack_require__(/*! ../dtos/login.dto */ "./apps/api-gateway/src/infrastructure/dtos/login.dto.ts");
-let ApiGatewayController = class ApiGatewayController {
-    courseClient;
-    constructor(courseClient) {
-        this.courseClient = courseClient;
+let CourseController = class CourseController {
+    kafkaClient;
+    constructor(kafkaClient) {
+        this.kafkaClient = kafkaClient;
     }
     async onModuleInit() {
-        this.courseClient.subscribeToResponseOf('create.course');
-        this.courseClient.subscribeToResponseOf('get.courses');
-        this.courseClient.subscribeToResponseOf('enroll.student');
-        this.courseClient.subscribeToResponseOf('unenroll.student');
-        this.courseClient.subscribeToResponseOf('create.user');
-        this.courseClient.subscribeToResponseOf('auth.login');
-        await this.courseClient.connect();
-        console.log('🐯 Gateway conectado y suscrito a create.course y get.courses');
+        this.kafkaClient.subscribeToResponseOf('create.course');
+        this.kafkaClient.subscribeToResponseOf('get.courses');
+        this.kafkaClient.subscribeToResponseOf('enroll.student');
+        this.kafkaClient.subscribeToResponseOf('unenroll.student');
+        await this.kafkaClient.connect();
     }
     createCourse(body) {
-        return this.courseClient.send('create.course', {
+        return this.kafkaClient.send('create.course', {
             id: crypto.randomUUID(),
             title: body.title,
             videoUrl: body.videoUrl,
         });
     }
-    enrollStudent(body) {
-        return this.courseClient.send('enroll.student', { body });
-    }
     async getCourses() {
-        console.log('📨 Gateway: Pidiendo lista de cursos...');
-        return this.courseClient.send('get.courses', {});
+        return this.kafkaClient.send('get.courses', {});
+    }
+    enrollStudent(body) {
+        return this.kafkaClient.send('enroll.student', { body });
     }
     unenrollStudent(body) {
-        return this.courseClient.send('unenroll.student', body);
-    }
-    createUser(body) {
-        return this.courseClient.send('create.user', {
-            id: crypto.randomUUID(),
-            ...body
-        });
-    }
-    loginUser(body) {
-        return this.courseClient.send('auth.login', body);
+        return this.kafkaClient.send('unenroll.student', body);
     }
 };
-exports.ApiGatewayController = ApiGatewayController;
+exports.CourseController = CourseController;
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [typeof (_b = typeof create_course_dto_1.CreateCourseDto !== "undefined" && create_course_dto_1.CreateCourseDto) === "function" ? _b : Object]),
     __metadata("design:returntype", void 0)
-], ApiGatewayController.prototype, "createCourse", null);
+], CourseController.prototype, "createCourse", null);
+__decorate([
+    (0, common_1.Get)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CourseController.prototype, "getCourses", null);
 __decorate([
     (0, common_1.Post)('enroll'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [typeof (_c = typeof enroll_student_dto_1.EnrollStudentDto !== "undefined" && enroll_student_dto_1.EnrollStudentDto) === "function" ? _c : Object]),
     __metadata("design:returntype", void 0)
-], ApiGatewayController.prototype, "enrollStudent", null);
-__decorate([
-    (0, common_1.Get)(),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
-], ApiGatewayController.prototype, "getCourses", null);
+], CourseController.prototype, "enrollStudent", null);
 __decorate([
     (0, common_1.Delete)('enroll'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [typeof (_d = typeof enroll_student_dto_1.EnrollStudentDto !== "undefined" && enroll_student_dto_1.EnrollStudentDto) === "function" ? _d : Object]),
     __metadata("design:returntype", void 0)
-], ApiGatewayController.prototype, "unenrollStudent", null);
-__decorate([
-    (0, common_1.Post)('users'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_e = typeof create_user_dto_1.CreateUserDto !== "undefined" && create_user_dto_1.CreateUserDto) === "function" ? _e : Object]),
-    __metadata("design:returntype", void 0)
-], ApiGatewayController.prototype, "createUser", null);
-__decorate([
-    (0, common_1.Post)('login'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_f = typeof login_dto_1.LoginDto !== "undefined" && login_dto_1.LoginDto) === "function" ? _f : Object]),
-    __metadata("design:returntype", void 0)
-], ApiGatewayController.prototype, "loginUser", null);
-exports.ApiGatewayController = ApiGatewayController = __decorate([
+], CourseController.prototype, "unenrollStudent", null);
+exports.CourseController = CourseController = __decorate([
     (0, common_1.Controller)('courses'),
     __param(0, (0, common_1.Inject)('COURSE_SERVICE')),
     __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _a : Object])
-], ApiGatewayController);
+], CourseController);
 
 
 /***/ },
@@ -329,6 +371,88 @@ __decorate([
 
 /***/ },
 
+/***/ "./apps/api-gateway/src/infrastructure/filters/rpc-exception.filter.ts"
+/*!*****************************************************************************!*\
+  !*** ./apps/api-gateway/src/infrastructure/filters/rpc-exception.filter.ts ***!
+  \*****************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.RpcExceptionFilter = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+let RpcExceptionFilter = class RpcExceptionFilter {
+    catch(exception, host) {
+        const ctx = host.switchToHttp();
+        const response = ctx.getResponse();
+        let statusCode = common_1.HttpStatus.INTERNAL_SERVER_ERROR;
+        let message = 'Internal server error';
+        let error = 'Error';
+        if (exception instanceof microservices_1.RpcException) {
+            const rpcError = exception.getError();
+            if (typeof rpcError === 'string') {
+                message = rpcError;
+            }
+            else if (typeof rpcError === 'object') {
+                statusCode = rpcError.statusCode || common_1.HttpStatus.INTERNAL_SERVER_ERROR;
+                message = rpcError.message || message;
+                error = rpcError.error || this.getErrorName(statusCode);
+            }
+        }
+        else if (exception instanceof Error) {
+            const errorMessage = exception.message;
+            try {
+                const parsed = JSON.parse(errorMessage);
+                statusCode = parsed.statusCode || common_1.HttpStatus.INTERNAL_SERVER_ERROR;
+                message = parsed.message || errorMessage;
+                error = parsed.error || this.getErrorName(statusCode);
+            }
+            catch {
+                message = errorMessage;
+            }
+        }
+        console.log(`🔴 [Gateway] Error ${statusCode}: ${message}`);
+        response.status(statusCode).json({
+            statusCode,
+            message,
+            error,
+            timestamp: new Date().toISOString(),
+        });
+    }
+    getErrorName(statusCode) {
+        switch (statusCode) {
+            case 400:
+                return 'Bad Request';
+            case 401:
+                return 'Unauthorized';
+            case 403:
+                return 'Forbidden';
+            case 404:
+                return 'Not Found';
+            case 409:
+                return 'Conflict';
+            case 422:
+                return 'Unprocessable Entity';
+            default:
+                return 'Error';
+        }
+    }
+};
+exports.RpcExceptionFilter = RpcExceptionFilter;
+exports.RpcExceptionFilter = RpcExceptionFilter = __decorate([
+    (0, common_1.Catch)()
+], RpcExceptionFilter);
+
+
+/***/ },
+
 /***/ "@nestjs/common"
 /*!*********************************!*\
   !*** external "@nestjs/common" ***!
@@ -414,12 +538,14 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
 const api_gateway_module_1 = __webpack_require__(/*! ./api-gateway.module */ "./apps/api-gateway/src/api-gateway.module.ts");
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const rpc_exception_filter_1 = __webpack_require__(/*! ./infrastructure/filters/rpc-exception.filter */ "./apps/api-gateway/src/infrastructure/filters/rpc-exception.filter.ts");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(api_gateway_module_1.ApiGatewayModule);
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         forbidNonWhitelisted: true,
     }));
+    app.useGlobalFilters(new rpc_exception_filter_1.RpcExceptionFilter());
     await app.listen(process.env.port ?? 3000);
 }
 bootstrap();

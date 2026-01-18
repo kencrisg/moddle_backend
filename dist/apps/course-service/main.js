@@ -2,32 +2,6 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./apps/course-service/src/application/commands/create-user.command.ts"
-/*!*****************************************************************************!*\
-  !*** ./apps/course-service/src/application/commands/create-user.command.ts ***!
-  \*****************************************************************************/
-(__unused_webpack_module, exports) {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.CreateUserCommand = void 0;
-class CreateUserCommand {
-    id;
-    email;
-    password;
-    fullName;
-    constructor(id, email, password, fullName) {
-        this.id = id;
-        this.email = email;
-        this.password = password;
-        this.fullName = fullName;
-    }
-}
-exports.CreateUserCommand = CreateUserCommand;
-
-
-/***/ },
-
 /***/ "./apps/course-service/src/application/commands/enroll-student.command.ts"
 /*!********************************************************************************!*\
   !*** ./apps/course-service/src/application/commands/enroll-student.command.ts ***!
@@ -116,70 +90,6 @@ exports.CreateCourseHandler = CreateCourseHandler = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [typeof (_a = typeof course_repository_port_1.CourseRepositoryPort !== "undefined" && course_repository_port_1.CourseRepositoryPort) === "function" ? _a : Object, typeof (_b = typeof event_bus_port_1.EventBusPort !== "undefined" && event_bus_port_1.EventBusPort) === "function" ? _b : Object])
 ], CreateCourseHandler);
-
-
-/***/ },
-
-/***/ "./apps/course-service/src/application/handlers/create-user.handler.ts"
-/*!*****************************************************************************!*\
-  !*** ./apps/course-service/src/application/handlers/create-user.handler.ts ***!
-  \*****************************************************************************/
-(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a, _b;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.CreateUserHandler = void 0;
-const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
-const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
-const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
-const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
-const user_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/user.entity */ "./apps/course-service/src/infrastructure/persistence/entities/user.entity.ts");
-const create_user_command_1 = __webpack_require__(/*! ../commands/create-user.command */ "./apps/course-service/src/application/commands/create-user.command.ts");
-const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-created.event */ "./apps/course-service/src/domain/events/user-created.event.ts");
-let CreateUserHandler = class CreateUserHandler {
-    userRepo;
-    eventEmitter;
-    constructor(userRepo, eventEmitter) {
-        this.userRepo = userRepo;
-        this.eventEmitter = eventEmitter;
-    }
-    async execute(command) {
-        const user = new user_entity_1.UserEntity();
-        user.id = command.id;
-        user.email = command.email;
-        user.password = command.password;
-        user.fullName = command.fullName;
-        user.role = 's';
-        try {
-            await this.userRepo.save(user);
-            console.log(`👤 [User] Usuario guardado en moodle_w: ${user.email}`);
-            this.eventEmitter.emit('UserCreatedEvent', new user_created_event_1.UserCreatedEvent(user.id, user.email, user.password, user.fullName, user.role));
-        }
-        catch (error) {
-            console.error('Error creando usuario:', error);
-            throw error;
-        }
-    }
-};
-exports.CreateUserHandler = CreateUserHandler;
-exports.CreateUserHandler = CreateUserHandler = __decorate([
-    (0, cqrs_1.CommandHandler)(create_user_command_1.CreateUserCommand),
-    __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof event_emitter_1.EventEmitter2 !== "undefined" && event_emitter_1.EventEmitter2) === "function" ? _b : Object])
-], CreateUserHandler);
 
 
 /***/ },
@@ -490,8 +400,6 @@ const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
 const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
 const get_courses_handler_1 = __webpack_require__(/*! ./application/handlers/get-courses.handler */ "./apps/course-service/src/application/handlers/get-courses.handler.ts");
-const user_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/user.entity */ "./apps/course-service/src/infrastructure/persistence/entities/user.entity.ts");
-const create_user_handler_1 = __webpack_require__(/*! ./application/handlers/create-user.handler */ "./apps/course-service/src/application/handlers/create-user.handler.ts");
 const unenroll_student_handler_1 = __webpack_require__(/*! ./application/handlers/unenroll-student.handler */ "./apps/course-service/src/application/handlers/unenroll-student.handler.ts");
 const create_course_handler_1 = __webpack_require__(/*! ./application/handlers/create-course.handler */ "./apps/course-service/src/application/handlers/create-course.handler.ts");
 const sync_course_read_model_handler_1 = __webpack_require__(/*! ./application/handlers/sync-course-read-model.handler */ "./apps/course-service/src/application/handlers/sync-course-read-model.handler.ts");
@@ -501,6 +409,7 @@ const postgres_course_repository_1 = __webpack_require__(/*! ./infrastructure/pe
 const course_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/course.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course.entity.ts");
 const course_view_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/course-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course-view.entity.ts");
 const course_controller_1 = __webpack_require__(/*! ./infrastructure/controllers/course.controller */ "./apps/course-service/src/infrastructure/controllers/course.controller.ts");
+const user_events_controller_1 = __webpack_require__(/*! ./infrastructure/controllers/user-events.controller */ "./apps/course-service/src/infrastructure/controllers/user-events.controller.ts");
 const enrollment_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/enrollment.entity */ "./apps/course-service/src/infrastructure/persistence/entities/enrollment.entity.ts");
 const enroll_student_handler_1 = __webpack_require__(/*! ./application/handlers/enroll-student.handler */ "./apps/course-service/src/application/handlers/enroll-student.handler.ts");
 const user_view_entity_1 = __webpack_require__(/*! ./infrastructure/persistence/entities/user-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/user-view.entity.ts");
@@ -522,7 +431,6 @@ exports.CourseServiceModule = CourseServiceModule;
 exports.CourseServiceModule = CourseServiceModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            user_view_entity_1.UserViewEntity,
             cqrs_1.CqrsModule,
             config_1.ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
             event_emitter_1.EventEmitterModule.forRoot(),
@@ -555,10 +463,10 @@ exports.CourseServiceModule = CourseServiceModule = __decorate([
                     synchronize: false,
                 }),
             }),
-            typeorm_1.TypeOrmModule.forFeature([course_entity_1.CourseEntity, enrollment_entity_1.EnrollmentEntity, user_entity_1.UserEntity]),
+            typeorm_1.TypeOrmModule.forFeature([course_entity_1.CourseEntity, enrollment_entity_1.EnrollmentEntity]),
             typeorm_1.TypeOrmModule.forFeature([course_view_entity_1.CourseViewEntity, user_view_entity_1.UserViewEntity], 'READ_CONNECTION'),
         ],
-        controllers: [course_controller_1.CourseController],
+        controllers: [course_controller_1.CourseController, user_events_controller_1.UserEventsController],
         providers: [
             sync_user_read_model_handler_1.SyncUserReadModelHandler,
             enroll_student_handler_1.EnrollStudentHandler,
@@ -566,7 +474,6 @@ exports.CourseServiceModule = CourseServiceModule = __decorate([
             sync_course_read_model_handler_1.SyncCourseReadModelHandler,
             get_courses_handler_1.GetCoursesHandler,
             unenroll_student_handler_1.UnenrollStudentHandler,
-            create_user_handler_1.CreateUserHandler,
             { provide: course_repository_port_1.CourseRepositoryPort, useClass: postgres_course_repository_1.PostgresCourseRepository },
             {
                 provide: event_bus_port_1.EventBusPort,
@@ -692,7 +599,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CourseController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -701,19 +608,12 @@ const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
 const get_courses_query_1 = __webpack_require__(/*! ../../application/queries/get-courses.query */ "./apps/course-service/src/application/queries/get-courses.query.ts");
 const enroll_student_command_1 = __webpack_require__(/*! ../../application/commands/enroll-student.command */ "./apps/course-service/src/application/commands/enroll-student.command.ts");
 const unenroll_student_command_1 = __webpack_require__(/*! ../../application/commands/unenroll-student.command */ "./apps/course-service/src/application/commands/unenroll-student.command.ts");
-const create_user_command_1 = __webpack_require__(/*! ../../application/commands/create-user.command */ "./apps/course-service/src/application/commands/create-user.command.ts");
-const user_view_entity_1 = __webpack_require__(/*! ../persistence/entities/user-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/user-view.entity.ts");
-const microservices_2 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
-const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
-const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
 let CourseController = class CourseController {
     commandBus;
     queryBus;
-    userReadRepo;
-    constructor(commandBus, queryBus, userReadRepo) {
+    constructor(commandBus, queryBus) {
         this.commandBus = commandBus;
         this.queryBus = queryBus;
-        this.userReadRepo = userReadRepo;
     }
     async create(data) {
     }
@@ -725,26 +625,6 @@ let CourseController = class CourseController {
     }
     async unenroll(data) {
         return this.commandBus.execute(new unenroll_student_command_1.UnenrollStudentCommand(data.studentId, data.courseId));
-    }
-    async createUser(data) {
-        return this.commandBus.execute(new create_user_command_1.CreateUserCommand(data.id, data.email, data.password, data.fullName));
-    }
-    async login(data) {
-        console.log(`🔐 [Read DB] Validando login para: ${data.email}`);
-        const user = await this.userReadRepo.findOneBy({ email: data.email });
-        if (!user) {
-            throw new microservices_2.RpcException('Usuario no encontrado o no sincronizado aún');
-        }
-        if (user.password !== data.password) {
-            throw new microservices_2.RpcException('Contraseña incorrecta');
-        }
-        return {
-            status: 'success',
-            userId: user.id,
-            fullName: user.fullName,
-            email: user.email,
-            role: user.role
-        };
     }
 };
 exports.CourseController = CourseController;
@@ -775,25 +655,63 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CourseController.prototype, "unenroll", null);
-__decorate([
-    (0, microservices_1.MessagePattern)('create.user'),
-    __param(0, (0, microservices_1.Payload)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], CourseController.prototype, "createUser", null);
-__decorate([
-    (0, microservices_1.MessagePattern)('auth.login'),
-    __param(0, (0, microservices_1.Payload)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], CourseController.prototype, "login", null);
 exports.CourseController = CourseController = __decorate([
     (0, common_1.Controller)(),
-    __param(2, (0, typeorm_1.InjectRepository)(user_view_entity_1.UserViewEntity, 'READ_CONNECTION')),
-    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.QueryBus !== "undefined" && cqrs_1.QueryBus) === "function" ? _b : Object, typeof (_c = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _c : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.QueryBus !== "undefined" && cqrs_1.QueryBus) === "function" ? _b : Object])
 ], CourseController);
+
+
+/***/ },
+
+/***/ "./apps/course-service/src/infrastructure/controllers/user-events.controller.ts"
+/*!**************************************************************************************!*\
+  !*** ./apps/course-service/src/infrastructure/controllers/user-events.controller.ts ***!
+  \**************************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserEventsController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
+const sync_user_read_model_handler_1 = __webpack_require__(/*! ../../application/handlers/sync-user-read-model.handler */ "./apps/course-service/src/application/handlers/sync-user-read-model.handler.ts");
+const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-created.event */ "./apps/course-service/src/domain/events/user-created.event.ts");
+let UserEventsController = class UserEventsController {
+    syncUserHandler;
+    constructor(syncUserHandler) {
+        this.syncUserHandler = syncUserHandler;
+    }
+    async handleUserCreated(data) {
+        console.log(`📥 [Course] Recibido evento user.created: ${data.email}`);
+        const event = new user_created_event_1.UserCreatedEvent(data.id, data.email, data.password, data.fullName, data.role);
+        await this.syncUserHandler.handle(event);
+    }
+};
+exports.UserEventsController = UserEventsController;
+__decorate([
+    (0, microservices_1.EventPattern)('user.created'),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserEventsController.prototype, "handleUserCreated", null);
+exports.UserEventsController = UserEventsController = __decorate([
+    (0, common_1.Controller)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof sync_user_read_model_handler_1.SyncUserReadModelHandler !== "undefined" && sync_user_read_model_handler_1.SyncUserReadModelHandler) === "function" ? _a : Object])
+], UserEventsController);
 
 
 /***/ },
@@ -1001,65 +919,6 @@ __decorate([
 exports.UserViewEntity = UserViewEntity = __decorate([
     (0, typeorm_1.Entity)('users_view')
 ], UserViewEntity);
-
-
-/***/ },
-
-/***/ "./apps/course-service/src/infrastructure/persistence/entities/user.entity.ts"
-/*!************************************************************************************!*\
-  !*** ./apps/course-service/src/infrastructure/persistence/entities/user.entity.ts ***!
-  \************************************************************************************/
-(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserEntity = void 0;
-const typeorm_1 = __webpack_require__(/*! typeorm */ "typeorm");
-let UserEntity = class UserEntity {
-    id;
-    email;
-    password;
-    fullName;
-    role;
-    isActive;
-};
-exports.UserEntity = UserEntity;
-__decorate([
-    (0, typeorm_1.PrimaryColumn)('uuid'),
-    __metadata("design:type", String)
-], UserEntity.prototype, "id", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ unique: true }),
-    __metadata("design:type", String)
-], UserEntity.prototype, "email", void 0);
-__decorate([
-    (0, typeorm_1.Column)(),
-    __metadata("design:type", String)
-], UserEntity.prototype, "password", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'full_name' }),
-    __metadata("design:type", String)
-], UserEntity.prototype, "fullName", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ default: 's' }),
-    __metadata("design:type", String)
-], UserEntity.prototype, "role", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'is_active', default: true }),
-    __metadata("design:type", Boolean)
-], UserEntity.prototype, "isActive", void 0);
-exports.UserEntity = UserEntity = __decorate([
-    (0, typeorm_1.Entity)('users')
-], UserEntity);
 
 
 /***/ },
