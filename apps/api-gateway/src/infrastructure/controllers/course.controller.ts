@@ -17,8 +17,14 @@ export class CourseController implements OnModuleInit {
         this.kafkaClient.subscribeToResponseOf('delete.course');
         this.kafkaClient.subscribeToResponseOf('get.course.students');
         this.kafkaClient.subscribeToResponseOf('update.course.status');
+        this.kafkaClient.subscribeToResponseOf('get.my.courses');
 
         await this.kafkaClient.connect();
+    }
+    @Get('my-courses/:studentId')
+    getMyCourses(@Param('studentId') studentId: string) {
+        console.log(`📨 [Gateway] Pidiendo cursos para el estudiante: ${studentId}`);
+        return this.kafkaClient.send('get.my.courses', { studentId });
     }
 
     @Post('enroll')

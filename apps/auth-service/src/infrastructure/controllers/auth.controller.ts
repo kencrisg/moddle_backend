@@ -16,7 +16,7 @@ export class AuthController {
     async createUser(@Payload() data: any) {
         console.log(`🔐 [Auth] Recibido create.user: ${data.email}`);
         return this.commandBus.execute(
-            new CreateUserCommand(data.id, data.email, data.password, data.fullName),
+            new CreateUserCommand(data.id, data.email, data.password, data.fullName, data.role),
         );
     }
 
@@ -32,4 +32,5 @@ export class AuthController {
             throw new RpcException(error.message || 'Error de autenticación');
         }
     }
+
 }

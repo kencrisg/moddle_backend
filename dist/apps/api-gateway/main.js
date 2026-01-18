@@ -188,7 +188,12 @@ let CourseController = class CourseController {
         this.kafkaClient.subscribeToResponseOf('delete.course');
         this.kafkaClient.subscribeToResponseOf('get.course.students');
         this.kafkaClient.subscribeToResponseOf('update.course.status');
+        this.kafkaClient.subscribeToResponseOf('get.my.courses');
         await this.kafkaClient.connect();
+    }
+    getMyCourses(studentId) {
+        console.log(`📨 [Gateway] Pidiendo cursos para el estudiante: ${studentId}`);
+        return this.kafkaClient.send('get.my.courses', { studentId });
     }
     enrollStudent(body) {
         return this.kafkaClient.send('enroll.student', body);
@@ -222,6 +227,13 @@ let CourseController = class CourseController {
     }
 };
 exports.CourseController = CourseController;
+__decorate([
+    (0, common_1.Get)('my-courses/:studentId'),
+    __param(0, (0, common_1.Param)('studentId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CourseController.prototype, "getMyCourses", null);
 __decorate([
     (0, common_1.Post)('enroll'),
     __param(0, (0, common_1.Body)()),
@@ -343,6 +355,7 @@ class CreateUserDto {
     email;
     password;
     fullName;
+    role;
 }
 exports.CreateUserDto = CreateUserDto;
 __decorate([
@@ -359,6 +372,12 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)({ message: 'El nombre completo es obligatorio' }),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "fullName", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsIn)(['a', 's']),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "role", void 0);
 
 
 /***/ },

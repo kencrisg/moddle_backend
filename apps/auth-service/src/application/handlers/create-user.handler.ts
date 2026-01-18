@@ -22,11 +22,11 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
         user.email = command.email;
         user.password = command.password;
         user.fullName = command.fullName;
-        user.role = 's'; // Default: student
+        user.role = command.role || 's'; // Default: student
 
         try {
             await this.userRepo.save(user);
-            console.log(`👤 [Auth] Usuario guardado en moodle_w: ${user.email}`);
+            console.log(`👤 [Auth] Usuario guardado en moodle_w: ${user.email} con rol: ${user.role}`);
 
             // Publish event to Kafka for other bdd
             const event = new UserCreatedEvent(

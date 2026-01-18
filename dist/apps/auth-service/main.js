@@ -16,11 +16,13 @@ class CreateUserCommand {
     email;
     password;
     fullName;
-    constructor(id, email, password, fullName) {
+    role;
+    constructor(id, email, password, fullName, role) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.fullName = fullName;
+        this.role = role;
     }
 }
 exports.CreateUserCommand = CreateUserCommand;
@@ -71,10 +73,10 @@ let CreateUserHandler = class CreateUserHandler {
         user.email = command.email;
         user.password = command.password;
         user.fullName = command.fullName;
-        user.role = 's';
+        user.role = command.role || 's';
         try {
             await this.userRepo.save(user);
-            console.log(`👤 [Auth] Usuario guardado en moodle_w: ${user.email}`);
+            console.log(`👤 [Auth] Usuario guardado en moodle_w: ${user.email} con rol: ${user.role}`);
             const event = new user_created_event_1.UserCreatedEvent(user.id, user.email, user.password, user.fullName, user.role);
             this.kafkaClient.emit('user.created', event);
             console.log(`📢 [Auth] Evento user.created emitido a Kafka`);
@@ -348,7 +350,7 @@ let AuthController = class AuthController {
     }
     async createUser(data) {
         console.log(`🔐 [Auth] Recibido create.user: ${data.email}`);
-        return this.commandBus.execute(new create_user_command_1.CreateUserCommand(data.id, data.email, data.password, data.fullName));
+        return this.commandBus.execute(new create_user_command_1.CreateUserCommand(data.id, data.email, data.password, data.fullName, data.role));
     }
     async login(data) {
         console.log(`🔐 [Auth] Recibido auth.login para: ${data.email}`);
