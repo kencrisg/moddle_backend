@@ -353,6 +353,71 @@ exports.GetCoursesHandler = GetCoursesHandler = __decorate([
 
 /***/ },
 
+/***/ "./apps/course-service/src/application/handlers/get-student-courses.handler.ts"
+/*!*************************************************************************************!*\
+  !*** ./apps/course-service/src/application/handlers/get-student-courses.handler.ts ***!
+  \*************************************************************************************/
+(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GetStudentCoursesHandler = void 0;
+const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
+const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
+const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
+const enrollment_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/enrollment.entity */ "./apps/course-service/src/infrastructure/persistence/entities/enrollment.entity.ts");
+const course_view_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/course-view.entity */ "./apps/course-service/src/infrastructure/persistence/entities/course-view.entity.ts");
+const get_student_courses_query_1 = __webpack_require__(/*! ../queries/get-student-courses.query */ "./apps/course-service/src/application/queries/get-student-courses.query.ts");
+let GetStudentCoursesHandler = class GetStudentCoursesHandler {
+    enrollmentRepo;
+    courseReadRepo;
+    constructor(enrollmentRepo, courseReadRepo) {
+        this.enrollmentRepo = enrollmentRepo;
+        this.courseReadRepo = courseReadRepo;
+    }
+    async execute(query) {
+        const { studentId } = query;
+        console.log(`🔍 [Query] Buscando cursos para el estudiante: ${studentId}`);
+        const enrollments = await this.enrollmentRepo.find({
+            where: { studentId },
+            select: ['courseId'],
+        });
+        if (enrollments.length === 0) {
+            return [];
+        }
+        const courseIds = enrollments.map((e) => e.courseId);
+        const courses = await this.courseReadRepo.find({
+            where: {
+                id: (0, typeorm_2.In)(courseIds),
+            },
+        });
+        return courses;
+    }
+};
+exports.GetStudentCoursesHandler = GetStudentCoursesHandler;
+exports.GetStudentCoursesHandler = GetStudentCoursesHandler = __decorate([
+    (0, cqrs_1.QueryHandler)(get_student_courses_query_1.GetStudentCoursesQuery),
+    __param(0, (0, typeorm_1.InjectRepository)(enrollment_entity_1.EnrollmentEntity)),
+    __param(1, (0, typeorm_1.InjectRepository)(course_view_entity_1.CourseViewEntity, 'READ_CONNECTION')),
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _b : Object])
+], GetStudentCoursesHandler);
+
+
+/***/ },
+
 /***/ "./apps/course-service/src/application/handlers/get-users.handler.ts"
 /*!***************************************************************************!*\
   !*** ./apps/course-service/src/application/handlers/get-users.handler.ts ***!
@@ -690,6 +755,26 @@ exports.GetCoursesQuery = GetCoursesQuery;
 
 /***/ },
 
+/***/ "./apps/course-service/src/application/queries/get-student-courses.query.ts"
+/*!**********************************************************************************!*\
+  !*** ./apps/course-service/src/application/queries/get-student-courses.query.ts ***!
+  \**********************************************************************************/
+(__unused_webpack_module, exports) {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GetStudentCoursesQuery = void 0;
+class GetStudentCoursesQuery {
+    studentId;
+    constructor(studentId) {
+        this.studentId = studentId;
+    }
+}
+exports.GetStudentCoursesQuery = GetStudentCoursesQuery;
+
+
+/***/ },
+
 /***/ "./apps/course-service/src/application/queries/get-users.query.ts"
 /*!************************************************************************!*\
   !*** ./apps/course-service/src/application/queries/get-users.query.ts ***!
@@ -749,6 +834,7 @@ const delete_course_handler_1 = __webpack_require__(/*! ./application/handlers/d
 const get_users_handler_1 = __webpack_require__(/*! ./application/handlers/get-users.handler */ "./apps/course-service/src/application/handlers/get-users.handler.ts");
 const get_course_students_handler_1 = __webpack_require__(/*! ./application/handlers/get-course-students.handler */ "./apps/course-service/src/application/handlers/get-course-students.handler.ts");
 const update_course_status_handler_1 = __webpack_require__(/*! ./application/handlers/update-course-status.handler */ "./apps/course-service/src/application/handlers/update-course-status.handler.ts");
+const get_student_courses_handler_1 = __webpack_require__(/*! ./application/handlers/get-student-courses.handler */ "./apps/course-service/src/application/handlers/get-student-courses.handler.ts");
 class NestEventBus {
     eventEmitter;
     constructor(eventEmitter) {
@@ -813,6 +899,7 @@ exports.CourseServiceModule = CourseServiceModule = __decorate([
             sync_course_read_model_handler_1.SyncCourseReadModelHandler,
             get_courses_handler_1.GetCoursesHandler,
             unenroll_student_handler_1.UnenrollStudentHandler,
+            get_student_courses_handler_1.GetStudentCoursesHandler,
             { provide: course_repository_port_1.CourseRepositoryPort, useClass: postgres_course_repository_1.PostgresCourseRepository },
             {
                 provide: event_bus_port_1.EventBusPort,
@@ -994,6 +1081,7 @@ const delete_course_command_1 = __webpack_require__(/*! ../../application/comman
 const get_users_query_1 = __webpack_require__(/*! ../../application/queries/get-users.query */ "./apps/course-service/src/application/queries/get-users.query.ts");
 const get_course_students_query_1 = __webpack_require__(/*! ../../application/queries/get-course-students.query */ "./apps/course-service/src/application/queries/get-course-students.query.ts");
 const update_course_status_command_1 = __webpack_require__(/*! ../../application/commands/update-course-status.command */ "./apps/course-service/src/application/commands/update-course-status.command.ts");
+const get_student_courses_query_1 = __webpack_require__(/*! ../../application/queries/get-student-courses.query */ "./apps/course-service/src/application/queries/get-student-courses.query.ts");
 let CourseController = class CourseController {
     commandBus;
     queryBus;
@@ -1032,6 +1120,9 @@ let CourseController = class CourseController {
     }
     async updateStatus(data) {
         return this.commandBus.execute(new update_course_status_command_1.UpdateCourseStatusCommand(data.id, data.isActive));
+    }
+    async getMyCourses(data) {
+        return this.queryBus.execute(new get_student_courses_query_1.GetStudentCoursesQuery(data.studentId));
     }
 };
 exports.CourseController = CourseController;
@@ -1090,6 +1181,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], CourseController.prototype, "updateStatus", null);
+__decorate([
+    (0, microservices_1.MessagePattern)('get.my.courses'),
+    __param(0, (0, microservices_1.Payload)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], CourseController.prototype, "getMyCourses", null);
 exports.CourseController = CourseController = __decorate([
     (0, common_1.Controller)(),
     __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.QueryBus !== "undefined" && cqrs_1.QueryBus) === "function" ? _b : Object, typeof (_c = typeof create_course_handler_1.CreateCourseHandler !== "undefined" && create_course_handler_1.CreateCourseHandler) === "function" ? _c : Object])

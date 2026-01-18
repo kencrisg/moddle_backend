@@ -9,6 +9,7 @@ import { DeleteCourseCommand } from '../../application/commands/delete-course.co
 import { GetUsersQuery } from '../../application/queries/get-users.query';
 import { GetCourseStudentsQuery } from '../../application/queries/get-course-students.query';
 import { UpdateCourseStatusCommand } from '../../application/commands/update-course-status.command';
+import { GetStudentCoursesQuery } from '../../application/queries/get-student-courses.query';
 
 @Controller()
 export class CourseController {
@@ -18,10 +19,10 @@ export class CourseController {
     private readonly createCourseHandler: CreateCourseHandler
   ) { }
 
-  @MessagePattern('create.course') 
+  @MessagePattern('create.course')
   async create(@Payload() message: any) {
     console.log('🐯 [Course Service] Mensaje Kafka recibido:', message);
-    
+
     // Ejecutamos el caso de uso (CQRS)
     await this.createCourseHandler.execute({
       id: message.id,
@@ -69,6 +70,9 @@ export class CourseController {
       new UpdateCourseStatusCommand(data.id, data.isActive)
     );
   }
-  
-  
+
+  @MessagePattern('get.my.courses')
+  async getMyCourses(@Payload() data: any) {
+    return this.queryBus.execute(new GetStudentCoursesQuery(data.studentId));
+  }
 }

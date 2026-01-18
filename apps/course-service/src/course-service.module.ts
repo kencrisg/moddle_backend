@@ -22,6 +22,7 @@ import { DeleteCourseHandler } from './application/handlers/delete-course.handle
 import { GetUsersHandler } from './application/handlers/get-users.handler';
 import { GetCourseStudentsHandler } from './application/handlers/get-course-students.handler';
 import { UpdateCourseStatusHandler } from './application/handlers/update-course-status.handler';
+import { GetStudentCoursesHandler } from './application/handlers/get-student-courses.handler';
 
 class NestEventBus implements EventBusPort {
   constructor(private readonly eventEmitter: EventEmitter2) { }
@@ -87,6 +88,7 @@ class NestEventBus implements EventBusPort {
     SyncCourseReadModelHandler,
     GetCoursesHandler,
     UnenrollStudentHandler,
+    GetStudentCoursesHandler,
 
     { provide: CourseRepositoryPort, useClass: PostgresCourseRepository },
 
