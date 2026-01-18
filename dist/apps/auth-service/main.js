@@ -49,7 +49,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.CreateUserHandler = void 0;
 const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
@@ -57,18 +57,15 @@ const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const microservices_1 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
-const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
 const user_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/user.entity */ "./apps/auth-service/src/infrastructure/persistence/entities/user.entity.ts");
 const create_user_command_1 = __webpack_require__(/*! ../commands/create-user.command */ "./apps/auth-service/src/application/commands/create-user.command.ts");
 const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-created.event */ "./apps/auth-service/src/domain/events/user-created.event.ts");
 let CreateUserHandler = class CreateUserHandler {
     userRepo;
     kafkaClient;
-    eventEmitter;
-    constructor(userRepo, kafkaClient, eventEmitter) {
+    constructor(userRepo, kafkaClient) {
         this.userRepo = userRepo;
         this.kafkaClient = kafkaClient;
-        this.eventEmitter = eventEmitter;
     }
     async execute(command) {
         const user = new user_entity_1.UserEntity();
@@ -81,8 +78,8 @@ let CreateUserHandler = class CreateUserHandler {
             await this.userRepo.save(user);
             console.log(`👤 [Auth] Usuario guardado en moodle_w: ${user.email} con rol: ${user.role}`);
             const event = new user_created_event_1.UserCreatedEvent(user.id, user.email, user.password, user.fullName, user.role);
-            this.eventEmitter.emit('UserCreatedEvent', event);
-            console.log(`📢 [Auth] Evento user.created emitido Localmente`);
+            this.kafkaClient.emit('user.created', event);
+            console.log(`📢 [Auth] Evento user.created emitido a Kafka`);
         }
         catch (error) {
             console.error('Error creando usuario:', error);
@@ -95,7 +92,7 @@ exports.CreateUserHandler = CreateUserHandler = __decorate([
     (0, cqrs_1.CommandHandler)(create_user_command_1.CreateUserCommand),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.UserEntity)),
     __param(1, (0, common_1.Inject)('KAFKA_SERVICE')),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _b : Object, typeof (_c = typeof event_emitter_1.EventEmitter2 !== "undefined" && event_emitter_1.EventEmitter2) === "function" ? _c : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _b : Object])
 ], CreateUserHandler);
 
 
@@ -177,11 +174,10 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SyncUserReadModelHandler = void 0;
-const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const event_emitter_1 = __webpack_require__(/*! @nestjs/event-emitter */ "@nestjs/event-emitter");
+const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
 const typeorm_1 = __webpack_require__(/*! @nestjs/typeorm */ "@nestjs/typeorm");
 const typeorm_2 = __webpack_require__(/*! typeorm */ "typeorm");
 const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-created.event */ "./apps/auth-service/src/domain/events/user-created.event.ts");
@@ -193,7 +189,6 @@ let SyncUserReadModelHandler = class SyncUserReadModelHandler {
         this.readRepository = readRepository;
         this.dataSource = dataSource;
     }
-    async onModuleInit() { }
     async handle(event) {
         console.log('🔄 [Sync] Sincronizando usuario en moodle_r (Read DB)...');
         const viewUser = new user_view_entity_1.UserViewEntity();
@@ -207,14 +202,8 @@ let SyncUserReadModelHandler = class SyncUserReadModelHandler {
     }
 };
 exports.SyncUserReadModelHandler = SyncUserReadModelHandler;
-__decorate([
-    (0, event_emitter_1.OnEvent)('UserCreatedEvent'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof user_created_event_1.UserCreatedEvent !== "undefined" && user_created_event_1.UserCreatedEvent) === "function" ? _c : Object]),
-    __metadata("design:returntype", Promise)
-], SyncUserReadModelHandler.prototype, "handle", null);
 exports.SyncUserReadModelHandler = SyncUserReadModelHandler = __decorate([
-    (0, common_1.Injectable)(),
+    (0, cqrs_1.EventsHandler)(user_created_event_1.UserCreatedEvent),
     __param(0, (0, typeorm_1.InjectRepository)(user_view_entity_1.UserViewEntity, 'READ_CONNECTION')),
     __param(1, (0, typeorm_1.InjectDataSource)('READ_CONNECTION')),
     __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.DataSource !== "undefined" && typeorm_2.DataSource) === "function" ? _b : Object])
@@ -417,24 +406,23 @@ const create_user_command_1 = __webpack_require__(/*! ../../application/commands
 const login_handler_1 = __webpack_require__(/*! ../../application/handlers/login.handler */ "./apps/auth-service/src/application/handlers/login.handler.ts");
 const microservices_2 = __webpack_require__(/*! @nestjs/microservices */ "@nestjs/microservices");
 const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-created.event */ "./apps/auth-service/src/domain/events/user-created.event.ts");
-const sync_create_user_handler_1 = __webpack_require__(/*! ../../application/handlers/sync-create-user.handler */ "./apps/auth-service/src/application/handlers/sync-create-user.handler.ts");
 let AuthController = class AuthController {
     commandBus;
+    eventBus;
     loginHandler;
-    syncUserHandler;
-    constructor(commandBus, loginHandler, syncUserHandler) {
+    constructor(commandBus, eventBus, loginHandler) {
         this.commandBus = commandBus;
+        this.eventBus = eventBus;
         this.loginHandler = loginHandler;
-        this.syncUserHandler = syncUserHandler;
     }
     async createUser(data) {
         console.log(`🔐 [Auth] Recibido create.user: ${data.email}`);
         return this.commandBus.execute(new create_user_command_1.CreateUserCommand(data.id, data.email, data.password, data.fullName, data.role));
     }
     async handleUserCreated(data) {
-        console.log(`📥 [Course] Recibido evento user.created: ${data.email}`);
+        console.log(`📥 [Auth] Recibido evento user.created desde Kafka: ${data.email}`);
         const event = new user_created_event_1.UserCreatedEvent(data.id, data.email, data.password, data.fullName, data.role);
-        await this.syncUserHandler.handle(event);
+        this.eventBus.publish(event);
     }
     async login(data) {
         console.log(`🔐 [Auth] Recibido auth.login para: ${data.email}`);
@@ -473,7 +461,7 @@ __decorate([
 ], AuthController.prototype, "login", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof login_handler_1.LoginHandler !== "undefined" && login_handler_1.LoginHandler) === "function" ? _b : Object, typeof (_c = typeof sync_create_user_handler_1.SyncUserReadModelHandler !== "undefined" && sync_create_user_handler_1.SyncUserReadModelHandler) === "function" ? _c : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof cqrs_1.CommandBus !== "undefined" && cqrs_1.CommandBus) === "function" ? _a : Object, typeof (_b = typeof cqrs_1.EventBus !== "undefined" && cqrs_1.EventBus) === "function" ? _b : Object, typeof (_c = typeof login_handler_1.LoginHandler !== "undefined" && login_handler_1.LoginHandler) === "function" ? _c : Object])
 ], AuthController);
 
 

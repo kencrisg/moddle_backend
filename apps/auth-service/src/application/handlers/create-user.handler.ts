@@ -3,7 +3,6 @@ import { Inject } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserEntity } from '../../infrastructure/persistence/entities/user.entity';
 import { CreateUserCommand } from '../commands/create-user.command';
 import { UserCreatedEvent } from '../../domain/events/user-created.event';
@@ -15,7 +14,6 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
         private readonly userRepo: Repository<UserEntity>,
         @Inject('KAFKA_SERVICE')
         private readonly kafkaClient: ClientKafka,
-        private readonly eventEmitter: EventEmitter2,
     ) { }
 
     async execute(command: CreateUserCommand): Promise<void> {
@@ -39,10 +37,10 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
                 user.role,
             );
 
-            // 2. Emitir Localmente (Sincronización Read Model)
-            this.eventEmitter.emit('UserCreatedEvent', event);
+            // 1. Emitir a Kafka (Integración)
+            this.kafkaClient.emit('user.created', event);
 
-            console.log(`📢 [Auth] Evento user.created emitido Localmente`);
+            console.log(`📢 [Auth] Evento user.created emitido a Kafka`);
         } catch (error) {
             console.error('Error creando usuario:', error);
             throw error;

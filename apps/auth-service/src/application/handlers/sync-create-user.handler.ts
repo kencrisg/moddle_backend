@@ -1,12 +1,11 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
+import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { UserCreatedEvent } from '../../domain/events/user-created.event';
 import { UserViewEntity } from '../../infrastructure/persistence/entities/user-view.entity';
 
-@Injectable()
-export class SyncUserReadModelHandler implements OnModuleInit {
+@EventsHandler(UserCreatedEvent)
+export class SyncUserReadModelHandler implements IEventHandler<UserCreatedEvent> {
     constructor(
         @InjectRepository(UserViewEntity, 'READ_CONNECTION')
         private readonly readRepository: Repository<UserViewEntity>,
@@ -14,10 +13,6 @@ export class SyncUserReadModelHandler implements OnModuleInit {
         private readonly dataSource: DataSource,
     ) { }
 
-    async onModuleInit() {}
-    
-
-    @OnEvent('UserCreatedEvent')
     async handle(event: UserCreatedEvent) {
         console.log('🔄 [Sync] Sincronizando usuario en moodle_r (Read DB)...');
 
