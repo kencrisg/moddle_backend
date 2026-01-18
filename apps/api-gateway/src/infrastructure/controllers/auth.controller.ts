@@ -9,17 +9,14 @@ export class AuthController implements OnModuleInit {
         // 1. Cliente para AUTH (Login y Registro real)
         @Inject('AUTH_SERVICE') private readonly authClient: ClientKafka,
 
-        // 2. Cliente para CURSOS (Para leer la lista de estudiantes de la BDD Read)
-        @Inject('COURSE_SERVICE') private readonly courseClient: ClientKafka,
+       
     ) { }
 
     async onModuleInit() {
         this.authClient.subscribeToResponseOf('create.user');
         this.authClient.subscribeToResponseOf('auth.login');
-        this.courseClient.subscribeToResponseOf('get.users');
 
         await this.authClient.connect();
-        await this.courseClient.connect();
     }
 
     @Post('register')
@@ -37,11 +34,6 @@ export class AuthController implements OnModuleInit {
         return this.authClient.send('auth.login', body);
     }
 
-    @Get('users')
-    getUsers() {
-        // Leer lista va a COURSE-SERVICE (Dueño de la BDD de Lectura/Vista)
-        console.log('📨 Gateway: Pidiendo estudiantes a la Vista de Cursos...');
-        return this.courseClient.send('get.users', { role: 's' });
-    }
+   
 
 }

@@ -18,9 +18,18 @@ export class CourseController implements OnModuleInit {
         this.kafkaClient.subscribeToResponseOf('get.course.students');
         this.kafkaClient.subscribeToResponseOf('update.course.status');
         this.kafkaClient.subscribeToResponseOf('get.my.courses');
+        this.kafkaClient.subscribeToResponseOf('get.users');
 
         await this.kafkaClient.connect();
     }
+
+    @Get('users')
+    getUsers() {
+        // Leer lista va a COURSE-SERVICE (Dueño de la BDD de Lectura/Vista)
+        console.log('📨 Gateway: Pidiendo estudiantes a la Vista de Cursos...');
+        return this.kafkaClient.send('get.users', { role: 's' });
+    }
+
     @Get('my-courses/:studentId')
     getMyCourses(@Param('studentId') studentId: string) {
         console.log(`📨 [Gateway] Pidiendo cursos para el estudiante: ${studentId}`);

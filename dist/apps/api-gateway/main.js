@@ -83,7 +83,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c, _d;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AuthController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
@@ -92,17 +92,13 @@ const create_user_dto_1 = __webpack_require__(/*! ../dtos/create-user.dto */ "./
 const login_dto_1 = __webpack_require__(/*! ../dtos/login.dto */ "./apps/api-gateway/src/infrastructure/dtos/login.dto.ts");
 let AuthController = class AuthController {
     authClient;
-    courseClient;
-    constructor(authClient, courseClient) {
+    constructor(authClient) {
         this.authClient = authClient;
-        this.courseClient = courseClient;
     }
     async onModuleInit() {
         this.authClient.subscribeToResponseOf('create.user');
         this.authClient.subscribeToResponseOf('auth.login');
-        this.courseClient.subscribeToResponseOf('get.users');
         await this.authClient.connect();
-        await this.courseClient.connect();
     }
     createUser(body) {
         return this.authClient.send('create.user', {
@@ -113,37 +109,26 @@ let AuthController = class AuthController {
     loginUser(body) {
         return this.authClient.send('auth.login', body);
     }
-    getUsers() {
-        console.log('📨 Gateway: Pidiendo estudiantes a la Vista de Cursos...');
-        return this.courseClient.send('get.users', { role: 's' });
-    }
 };
 exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('register'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_c = typeof create_user_dto_1.CreateUserDto !== "undefined" && create_user_dto_1.CreateUserDto) === "function" ? _c : Object]),
+    __metadata("design:paramtypes", [typeof (_b = typeof create_user_dto_1.CreateUserDto !== "undefined" && create_user_dto_1.CreateUserDto) === "function" ? _b : Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "createUser", null);
 __decorate([
     (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [typeof (_d = typeof login_dto_1.LoginDto !== "undefined" && login_dto_1.LoginDto) === "function" ? _d : Object]),
+    __metadata("design:paramtypes", [typeof (_c = typeof login_dto_1.LoginDto !== "undefined" && login_dto_1.LoginDto) === "function" ? _c : Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "loginUser", null);
-__decorate([
-    (0, common_1.Get)('users'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "getUsers", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
     __param(0, (0, common_1.Inject)('AUTH_SERVICE')),
-    __param(1, (0, common_1.Inject)('COURSE_SERVICE')),
-    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _a : Object, typeof (_b = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof microservices_1.ClientKafka !== "undefined" && microservices_1.ClientKafka) === "function" ? _a : Object])
 ], AuthController);
 
 
@@ -189,7 +174,12 @@ let CourseController = class CourseController {
         this.kafkaClient.subscribeToResponseOf('get.course.students');
         this.kafkaClient.subscribeToResponseOf('update.course.status');
         this.kafkaClient.subscribeToResponseOf('get.my.courses');
+        this.kafkaClient.subscribeToResponseOf('get.users');
         await this.kafkaClient.connect();
+    }
+    getUsers() {
+        console.log('📨 Gateway: Pidiendo estudiantes a la Vista de Cursos...');
+        return this.kafkaClient.send('get.users', { role: 's' });
     }
     getMyCourses(studentId) {
         console.log(`📨 [Gateway] Pidiendo cursos para el estudiante: ${studentId}`);
@@ -227,6 +217,12 @@ let CourseController = class CourseController {
     }
 };
 exports.CourseController = CourseController;
+__decorate([
+    (0, common_1.Get)('users'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], CourseController.prototype, "getUsers", null);
 __decorate([
     (0, common_1.Get)('my-courses/:studentId'),
     __param(0, (0, common_1.Param)('studentId')),
