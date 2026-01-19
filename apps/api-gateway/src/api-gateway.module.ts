@@ -1,10 +1,41 @@
 import { Module } from '@nestjs/common';
-import { ApiGatewayController } from './api-gateway.controller';
-import { ApiGatewayService } from './api-gateway.service';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { AuthController } from './infrastructure/controllers/auth.controller';
+import { CourseController } from './infrastructure/controllers/course.controller';
 
 @Module({
-  imports: [],
-  controllers: [ApiGatewayController],
-  providers: [ApiGatewayService],
+  imports: [
+
+    ClientsModule.register([
+      {
+        name: 'COURSE_SERVICE',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            clientId: 'api-gateway',
+            brokers: ['127.0.0.1:29092'],
+          },
+          consumer: {
+            groupId: 'api-gateway-consumer',
+          },
+        },
+      },
+      {
+        name: 'AUTH_SERVICE',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            clientId: 'api-gateway-auth',
+            brokers: ['127.0.0.1:29092'],
+          },
+          consumer: {
+            groupId: 'auth-consumer-gateway',
+          },
+        },
+      },
+    ]),
+  ],
+  controllers: [AuthController, CourseController],
+  providers: [],
 })
-export class ApiGatewayModule {}
+export class ApiGatewayModule { }
