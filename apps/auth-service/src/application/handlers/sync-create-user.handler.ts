@@ -1,6 +1,6 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { UserCreatedEvent } from '../../domain/events/user-created.event';
 import { UserViewEntity } from '../../infrastructure/persistence/entities/user-view.entity';
 
@@ -9,8 +9,6 @@ export class SyncUserReadModelHandler implements IEventHandler<UserCreatedEvent>
     constructor(
         @InjectRepository(UserViewEntity, 'READ_CONNECTION')
         private readonly readRepository: Repository<UserViewEntity>,
-        @InjectDataSource('READ_CONNECTION')
-        private readonly dataSource: DataSource,
     ) { }
 
     async handle(event: UserCreatedEvent) {

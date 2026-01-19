@@ -7,7 +7,6 @@ import { GetUsersQuery } from '../queries/get-users.query';
 @QueryHandler(GetUsersQuery)
 export class GetUsersHandler implements IQueryHandler<GetUsersQuery> {
   constructor(
-    // 👇 Usamos la conexión de LECTURA para que sea ultra rápido
     @InjectRepository(UserViewEntity, 'READ_CONNECTION')
     private readonly userReadRepo: Repository<UserViewEntity>,
   ) {}
@@ -16,7 +15,6 @@ export class GetUsersHandler implements IQueryHandler<GetUsersQuery> {
     const { role } = query;
     console.log(`🔍 [Query] Buscando usuarios con rol: ${role || 'TODOS'}`);
     
-    // Si hay rol, filtramos. Si no, devolvemos todos.
     const whereCondition = role ? { role } : {};
 
     return await this.userReadRepo.find({

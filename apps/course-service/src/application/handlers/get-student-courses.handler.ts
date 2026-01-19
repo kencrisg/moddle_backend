@@ -18,7 +18,6 @@ export class GetStudentCoursesHandler implements IQueryHandler<GetStudentCourses
         const { studentId } = query;
         console.log(`🔍 [Query] Buscando cursos para el estudiante: ${studentId}`);
 
-        // 1. Obtener ID de cursos donde está matriculado
         const enrollments = await this.enrollmentRepo.find({
             where: { studentId },
             select: ['courseId'],
@@ -30,7 +29,6 @@ export class GetStudentCoursesHandler implements IQueryHandler<GetStudentCourses
 
         const courseIds = enrollments.map((e) => e.courseId);
 
-        // 2. Obtener detalles de los cursos (BDD Lectura)
         const courses = await this.courseReadRepo.find({
             where: {
                 id: In(courseIds),

@@ -141,7 +141,7 @@ let LoginHandler = class LoginHandler {
             id: user.id,
             email: user.email,
             role: user.role,
-            token: 'fake-jwt-token',
+            token: 'jwt-token',
             message: 'Login Exitoso'
         };
     }
@@ -174,7 +174,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b;
+var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.SyncUserReadModelHandler = void 0;
 const cqrs_1 = __webpack_require__(/*! @nestjs/cqrs */ "@nestjs/cqrs");
@@ -184,10 +184,8 @@ const user_created_event_1 = __webpack_require__(/*! ../../domain/events/user-cr
 const user_view_entity_1 = __webpack_require__(/*! ../../infrastructure/persistence/entities/user-view.entity */ "./apps/auth-service/src/infrastructure/persistence/entities/user-view.entity.ts");
 let SyncUserReadModelHandler = class SyncUserReadModelHandler {
     readRepository;
-    dataSource;
-    constructor(readRepository, dataSource) {
+    constructor(readRepository) {
         this.readRepository = readRepository;
-        this.dataSource = dataSource;
     }
     async handle(event) {
         console.log('🔄 [Sync] Sincronizando usuario en moodle_r (Read DB)...');
@@ -205,8 +203,7 @@ exports.SyncUserReadModelHandler = SyncUserReadModelHandler;
 exports.SyncUserReadModelHandler = SyncUserReadModelHandler = __decorate([
     (0, cqrs_1.EventsHandler)(user_created_event_1.UserCreatedEvent),
     __param(0, (0, typeorm_1.InjectRepository)(user_view_entity_1.UserViewEntity, 'READ_CONNECTION')),
-    __param(1, (0, typeorm_1.InjectDataSource)('READ_CONNECTION')),
-    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object, typeof (_b = typeof typeorm_2.DataSource !== "undefined" && typeorm_2.DataSource) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof typeorm_2.Repository !== "undefined" && typeorm_2.Repository) === "function" ? _a : Object])
 ], SyncUserReadModelHandler);
 
 

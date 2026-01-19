@@ -25,7 +25,7 @@ export class CreateCourseHandler implements ICommandHandler<CreateCourseCommand>
     // 2. Guardar en Base de Datos de Escritura (Moodle_W)
     await this.courseRepo.save(course);
 
-    // 3. Crear y publicar el Evento de Dominio
+    // 3. Crear y publicar el Evento
     const event = new CourseCreatedEvent(
       course.id,
       course.title,
@@ -33,7 +33,6 @@ export class CreateCourseHandler implements ICommandHandler<CreateCourseCommand>
       course.createdAt,
     );
 
-    // 4. Publicar al EventBus interno (para que SyncCourseReadModelHandler lo capture)
     this.eventBus.publish(event);
 
     console.log(`Curso creado y evento disparado: ${course.id}`);

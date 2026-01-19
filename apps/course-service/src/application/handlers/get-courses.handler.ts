@@ -7,7 +7,6 @@ import { GetCoursesQuery } from '../queries/get-courses.query';
 @QueryHandler(GetCoursesQuery)
 export class GetCoursesHandler implements IQueryHandler<GetCoursesQuery> {
   constructor(
-    // ¡OJO AQUÍ! Inyectamos la conexión 'READ_CONNECTION'
     @InjectRepository(CourseViewEntity, 'READ_CONNECTION')
     private readonly readRepository: Repository<CourseViewEntity>,
   ) {}

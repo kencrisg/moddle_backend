@@ -22,7 +22,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
         user.email = command.email;
         user.password = command.password;
         user.fullName = command.fullName;
-        user.role = command.role || 's'; // Default: student
+        user.role = command.role || 's'; 
 
         try {
             await this.userRepo.save(user);
@@ -36,10 +36,7 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
                 user.fullName,
                 user.role,
             );
-
-            // 1. Emitir a Kafka (Integración)
             this.kafkaClient.emit('sync.user.created', event);
-
             console.log(`📢 [Auth] Evento user.created emitido a Kafka`);
         } catch (error) {
             console.error('Error creando usuario:', error);

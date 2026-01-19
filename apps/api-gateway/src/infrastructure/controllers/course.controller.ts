@@ -46,15 +46,15 @@ export class CourseController implements OnModuleInit {
         return this.kafkaClient.send('unenroll.student', body);
     }
 
-    @Get(':id/students') // GET http://localhost:3000/courses/UUID-DEL-CURSO/students
+    @Get(':id/students') 
     getCourseStudents(@Param('id') id: string) {
         console.log(`📨 Gateway: Pidiendo estudiantes del curso ${id}`);
         return this.kafkaClient.send('get.course.students', { courseId: id });
     }
-    @Patch(':id/status') // PATCH http://localhost:3000/courses/UUID/status
+    @Patch(':id/status')
     updateStatus(
         @Param('id') id: string,
-        @Body() body: { isActive: boolean } // Esperamos un JSON { "isActive": false }
+        @Body() body: { isActive: boolean }
     ) {
         console.log(`🔄 Gateway: Cambiando estado del curso ${id} a ${body.isActive}`);
         return this.kafkaClient.send('update.course.status', {

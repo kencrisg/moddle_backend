@@ -32,10 +32,8 @@ export class AuthController {
             data.fullName,
             data.role,
         );
-        // Publicar al EventBus interno para que lo maneje el SyncHandler
         this.eventBus.publish(event);
     }
-
 
     @MessagePattern('auth.login')
     async login(@Payload() data: any) {

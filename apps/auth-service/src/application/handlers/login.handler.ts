@@ -26,7 +26,7 @@ export class LoginHandler {
             id: user.id,
             email: user.email,
             role: user.role,
-            token: 'fake-jwt-token',
+            token: 'jwt-token',
             message: 'Login Exitoso'
         };
     }

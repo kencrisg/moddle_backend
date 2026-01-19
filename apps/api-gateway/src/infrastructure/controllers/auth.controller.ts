@@ -6,7 +6,6 @@ import { LoginDto } from '../dtos/login.dto';
 @Controller('auth')
 export class AuthController implements OnModuleInit {
     constructor(
-        // 1. Cliente para AUTH (Login y Registro real)
         @Inject('AUTH_SERVICE') private readonly authClient: ClientKafka,
     ) { }
 

@@ -14,11 +14,9 @@ export class DeleteCourseHandler implements ICommandHandler<DeleteCourseCommand>
     ) { }
 
     async execute(command: DeleteCourseCommand): Promise<void> {
-        // 1. Borrar de la Base de Escritura (moodle_w)
         await this.courseRepo.delete(command.id);
         console.log(`🗑️ [Delete] Curso eliminado de moodle_w: ${command.id}`);
 
-        // 2. Disparar evento para que se borre de la lectura
         this.eventBus.publish(new CourseDeletedEvent(command.id));
     }
 }

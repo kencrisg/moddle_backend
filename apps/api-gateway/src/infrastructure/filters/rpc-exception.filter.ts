@@ -23,7 +23,6 @@ export class RpcExceptionFilter implements ExceptionFilter {
         let message = 'Internal server error';
         let error = 'Error';
 
-        // Handle RpcException or errors from Kafka microservices
         if (exception instanceof RpcException) {
             const rpcError = exception.getError() as RpcError | string;
 
